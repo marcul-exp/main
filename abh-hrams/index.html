@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Реконструкции исторических памятников</title>
+<style>
+:root{--bg:#f3f4f6;--card:#fff;--primary:#2563eb;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--radius:16px;--shadow:0 10px 30px -5px rgba(0,0,0,.08)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+.wrapper{max-width:1200px;margin:0 auto;padding:40px 20px}
+
+.controls{display:flex;gap:12px;align-items:center;margin-bottom:24px;flex-wrap:wrap}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;flex:1}
+.tab-btn{padding:10px 18px;border:1px solid var(--border);background:#fff;border-radius:10px;cursor:pointer;font-weight:500;font-size:14px;transition:.2s}
+.tab-btn:hover{border-color:var(--primary);color:var(--primary);transform:translateY(-1px)}
+.tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 4px 12px rgba(37,99,235,.3)}
+.dropdown{display:none;padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:#fff;font-size:14px;min-width:200px}
+.dropdown.show{display:block}
+.btn-toggle{margin-left:auto;padding:10px 16px;border:1px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-size:13px;font-weight:500}
+.btn-toggle:hover{background:#f9fafb;border-color:var(--primary)}
+
+.nav-arrows{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:24px;padding:16px;background:var(--card);border-radius:12px;box-shadow:var(--shadow)}
+.nav-btn{padding:10px 20px;border:1px solid var(--border);background:#fff;border-radius:10px;cursor:pointer;font-weight:500;font-size:14px;transition:.2s}
+.nav-btn:hover:not(:disabled){background:var(--primary);color:#fff;border-color:var(--primary)}
+.nav-btn:disabled{opacity:.3;cursor:not-allowed}
+.nav-counter{font-weight:600;font-size:16px;color:var(--text);min-width:120px;text-align:center}
+
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:36px}
+.card-header{margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.card-header h1{font-size:32px;font-weight:600;margin-bottom:10px}
+.description{color:var(--muted);font-size:15px;line-height:1.7;white-space:pre-wrap;margin-bottom:16px}
+.description a{color:var(--primary);text-decoration:none;font-weight:500;border-bottom:1px dashed var(--primary)}
+.description a:hover{color:#c0392b;border-bottom-style:solid}
+.authors-line{font-size:14px;color:var(--muted);padding-top:12px;border-top:1px dashed var(--border);font-weight:500}
+
+.media-container{width:100%;margin-bottom:32px}
+.carousel{position:relative;aspect-ratio:4/3;border-radius:12px;overflow:hidden;background:#000;border:1px solid var(--border)}
+.carousel-track{display:flex;height:100%;transition:transform .4s cubic-bezier(.4,0,.2,1)}
+.carousel-slide{min-width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#111;position:relative}
+.carousel-slide img,.carousel-slide video{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.carousel-placeholder{color:#9ca3af;text-align:center;padding:20px}
+.carousel-placeholder .icon{font-size:56px;margin-bottom:12px;opacity:.5}
+.carousel-btn{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;border:none;background:rgba(255,255,255,.9);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);z-index:2;display:flex;align-items:center;justify-content:center;font-size:20px;color:#111}
+.carousel-btn:hover{background:#fff;transform:translateY(-50%) scale(1.05)}
+.carousel-btn:disabled{opacity:.3;cursor:not-allowed}
+.carousel-btn.prev{left:12px}.carousel-btn.next{right:12px}
+.carousel-dots{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:2}
+.carousel-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.5);cursor:pointer;border:none;transition:.2s}
+.carousel-dot.active{background:#fff;width:24px;border-radius:4px}
+.carousel-counter{position:absolute;top:12px;right:12px;background:rgba(0,0,0,.6);color:#fff;padding:6px 12px;border-radius:12px;font-size:13px;z-index:2;backdrop-filter:blur(4px)}
+.video-badge{position:absolute;top:12px;left:12px;background:rgba(239,68,68,.9);color:#fff;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;z-index:2;pointer-events:none}
+
+.literature-section{margin-top:32px;padding-top:24px;border-top:2px solid var(--border)}
+.literature-section h2{font-size:22px;font-weight:600;margin-bottom:16px;color:var(--text);display:flex;align-items:center;gap:8px}
+.literature-list{list-style:none;display:grid;gap:12px}
+.literature-item{padding:14px 18px;background:var(--bg);border-radius:10px;border-left:4px solid var(--primary);transition:.2s}
+.literature-item:hover{background:#e5e7eb;transform:translateX(4px)}
+.literature-item a{color:var(--primary);text-decoration:none;font-weight:500;font-size:15px;display:flex;align-items:center;gap:8px;word-break:break-all}
+.literature-item a:hover{text-decoration:underline}
+.literature-item a::before{content:'📚';font-size:16px;flex-shrink:0}
+.literature-empty{color:var(--muted);font-style:italic;padding:20px;text-align:center}
+
+.error-banner{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:16px 20px;border-radius:12px;margin-bottom:20px;font-size:14px;display:none;line-height:1.6}
+.error-banner code{background:rgba(0,0,0,.05);padding:2px 6px;border-radius:4px;font-size:13px}
+
+@media(max-width:768px){
+    .card{padding:24px}
+    .wrapper{padding:20px 16px}
+    .controls{flex-direction:column;align-items:stretch}
+    .btn-toggle{margin-left:0}
+    .carousel{aspect-ratio:1/1}
+    .card-header h1{font-size:24px}
+    .nav-arrows{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+<main class="wrapper">
+    <div class="error-banner" id="errorBanner"></div>
+    
+    <div class="nav-arrows">
+        <button class="nav-btn" id="navPrev">← Предыдущий</button>
+        <div class="nav-counter" id="navCounter">0 из 0</div>
+        <button class="nav-btn" id="navNext">Следующий →</button>
+    </div>
+    
+    <nav class="controls">
+        <div class="tabs" id="tabsNav"></div>
+        <select class="dropdown" id="dropdownNav"></select>
+        <button class="btn-toggle" id="switchNav">🔄 Переключить вид</button>
+    </nav>
+    
+    <div class="card">
+        <div class="card-header">
+            <h1 id="modelTitle">Загрузка...</h1>
+            <div class="description" id="modelDesc"></div>
+            <div class="authors-line" id="authorsLine" style="display:none"></div>
+        </div>
+        
+        <div class="media-container">
+            <div class="carousel" id="carousel">
+                <div class="carousel-track" id="carouselTrack"></div>
+                <button class="carousel-btn prev" id="carouselPrev">‹</button>
+                <button class="carousel-btn next" id="carouselNext">›</button>
+                <div class="carousel-dots" id="carouselDots"></div>
+                <div class="carousel-counter" id="carouselCounter" style="display:none"></div>
+            </div>
+        </div>
+        
+        <div class="literature-section">
+            <h2>📖 Использованная литература</h2>
+            <ul class="literature-list" id="literatureList">
+                <li class="literature-empty">Загрузка...</li>
+            </ul>
+        </div>
+    </div>
+</main>
+
+<script>
+/* ============================================================
+   НАСТРОЙКИ — ОБНОВЛЕНО ПОД НОВЫЙ РЕПОЗИТОРИЙ
+   ============================================================ */
+const GITHUB_USER   = 'marcul-exp';
+const GITHUB_REPO   = 'abh-hrams';
+const GITHUB_BRANCH = 'main';
+
+const RAW_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
+const API_URL = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents`;
+
+const IMAGE_EXT = ['jpg','jpeg','png','webp','avif','gif'];
+const VIDEO_EXT = ['mp4','webm','mov','m4v'];
+
+/* ============================================================
+   УТИЛИТЫ
+   ============================================================ */
+async function fetchText(path) {
+    try {
+        const r = await fetch(`${RAW_URL}/${path}?t=${Date.now()}`);
+        return r.ok ? r.text() : null;
+    } catch { return null; }
+}
+
+function showError(msg) {
+    const el = document.getElementById('errorBanner');
+    el.innerHTML = msg;
+    el.style.display = 'block';
+}
+
+// Парсинг ссылок вида [текст](url) в описании
+function formatLinks(raw) {
+    let safe = raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return safe.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener noreferrer">$1 ↗</a>');
+}
+
+/* ============================================================
+   ЗАГРУЗКА tab.txt
+   Формат: Название-(Автор)-slug   (slug можно не писать)
+   ============================================================ */
+async function loadTabData() {
+    const text = await fetchText('tab.txt');
+    if (text === null) {
+        showError(`❌ Файл <code>tab.txt</code> не найден в репозитории <strong>${GITHUB_REPO}</strong> (ветка <code>${GITHUB_BRANCH}</code>).`);
+        return [];
+    }
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    return lines.map((line, i) => {
+        const id = String(i + 1);
+        const m = line.match(/^(.+?)\s*-\((.+?)\)/);
+        return m
+            ? { id, title: m[1].trim(), author: m[2].trim() }
+            : { id, title: line, author: '' };
+    });
+}
+
+/* ============================================================
+   ЗАГРУЗКА ФОТО/ВИДЕО — через GitHub API (регистр не важен)
+   ============================================================ */
+async function loadMedia(id) {
+    // Попытка 1: GitHub API
+    try {
+        const r = await fetch(`${API_URL}/image/${id}?t=${Date.now()}`, {
+            headers: { 'Accept': 'application/vnd.github+json' }
+        });
+        if (r.ok) {
+            const files = await r.json();
+            if (Array.isArray(files)) {
+                const items = files
+                    .filter(f => f.type === 'file')
+                    .filter(f => {
+                        const ext = f.name.split('.').pop().toLowerCase();
+                        return IMAGE_EXT.includes(ext) || VIDEO_EXT.includes(ext);
+                    })
+                    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
+                    .map(f => {
+                        const ext = f.name.split('.').pop().toLowerCase();
+                        return {
+                            url: f.download_url,
+                            type: VIDEO_EXT.includes(ext) ? 'video' : 'image',
+                            name: f.name
+                        };
+                    });
+                if (items.length) return items;
+            }
+        }
+    } catch (e) { console.warn('API не сработал, пробую перебор:', e); }
+
+    // Попытка 2 (fallback): перебор имён с обоими регистрами
+    const variants = [];
+    for (let n = 1; n <= 30; n++) {
+        for (const ext of [...IMAGE_EXT, ...VIDEO_EXT]) {
+            variants.push(`${n}.${ext}`);
+            variants.push(`${n}.${ext.toUpperCase()}`);
+        }
+    }
+    const found = [];
+    for (const name of variants) {
+        try {
+            const r = await fetch(`${RAW_URL}/image/${id}/${name}`, { method: 'GET' });
+            if (r.ok) {
+                const ext = name.split('.').pop().toLowerCase();
+                found.push({
+                    url: `${RAW_URL}/image/${id}/${name}`,
+                    type: VIDEO_EXT.includes(ext) ? 'video' : 'image',
+                    name
+                });
+            }
+        } catch {}
+    }
+    // Убираем дубли и сортируем по номеру
+    const seen = new Set();
+    return found.filter(f => {
+        const num = f.name.split('.')[0];
+        if (seen.has(num)) return false;
+        seen.add(num); return true;
+    }).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+}
+
+/* ============================================================
+   ЗАГРУЗКА ЛИТЕРАТУРЫ (CSV: Название;Ссылка)
+   ============================================================ */
+async function loadLiterature(id) {
+    const text = await fetchText(`literature/${id}.csv`);
+    if (!text) return [];
+    return text.split('\n').map(l => l.trim()).filter(Boolean)
+        .filter(l => !l.toLowerCase().startsWith('название источника;'))
+        .map(l => {
+            const [name, url] = l.split(';');
+            return name && url ? { name: name.trim(), url: url.trim() } : null;
+        }).filter(Boolean);
+}
+
+/* ============================================================
+   РЕНДЕР
+   ============================================================ */
+function renderHeader(descEl, authorsEl, description, author) {
+    descEl.innerHTML = description ? formatLinks(description) : '<em>Описание отсутствует.</em>';
+    if (!author) { authorsEl.style.display = 'none'; return; }
+    authorsEl.style.display = 'block';
+    authorsEl.textContent = `Конструкция выполнена автором: ${author}`;
+}
+
+function renderLiterature(listEl, items) {
+    if (!items.length) {
+        listEl.innerHTML = '<li class="literature-empty">Литература не добавлена</li>';
+        return;
+    }
+    listEl.innerHTML = items.map(it => `
+        <li class="literature-item">
+            <a href="${it.url}" target="_blank" rel="noopener noreferrer">${it.name}</a>
+        </li>
+    `).join('');
+}
+
+/* ============================================================
+   КАРУСЕЛЬ
+   ============================================================ */
+const track = document.getElementById('carouselTrack');
+const btnPrev = document.getElementById('carouselPrev');
+const btnNext = document.getElementById('carouselNext');
+const dotsEl = document.getElementById('carouselDots');
+const counterEl = document.getElementById('carouselCounter');
+let media = [], idx = 0;
+
+function pauseVideos() { track.querySelectorAll('video').forEach(v => { v.pause(); v.currentTime = 0; }); }
+
+function updateCarousel() {
+    pauseVideos();
+    track.style.transform = `translateX(-${idx * 100}%)`;
+    dotsEl.querySelectorAll('.carousel-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+    btnPrev.disabled = idx === 0;
+    btnNext.disabled = idx === media.length - 1;
+    counterEl.style.display = media.length > 1 ? 'block' : 'none';
+    if (media.length > 1) counterEl.textContent = `${idx + 1} / ${media.length}`;
+    const v = track.children[idx]?.querySelector('video');
+    if (v) v.play().catch(() => {});
+}
+
+function renderCarousel(items, id) {
+    media = items; idx = 0;
+    track.innerHTML = ''; dotsEl.innerHTML = '';
+    if (!items.length) {
+        track.innerHTML = `<div class="carousel-slide"><div class="carousel-placeholder"><div class="icon">🖼️</div><div>Нет медиафайлов<br><small>image/${id}/</small></div></div></div>`;
+        btnPrev.style.display = 'none'; btnNext.style.display = 'none';
+        return;
+    }
+    btnPrev.style.display = 'flex'; btnNext.style.display = 'flex';
+    items.forEach((it, i) => {
+        const slide = document.createElement('div');
+        slide.className = 'carousel-slide';
+        if (it.type === 'video') {
+            slide.innerHTML = `<div class="video-badge">▶ VIDEO</div><video src="${it.url}" controls loop muted playsinline preload="metadata"></video>`;
+        } else {
+            slide.innerHTML = `<img src="${it.url}" alt="${it.name}" loading="lazy">`;
+        }
+        track.appendChild(slide);
+        const dot = document.createElement('button');
+        dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+        dot.onclick = () => { idx = i; updateCarousel(); };
+        dotsEl.appendChild(dot);
+    });
+    updateCarousel();
+}
+
+btnPrev.onclick = () => { if (idx > 0) { idx--; updateCarousel(); } };
+btnNext.onclick = () => { if (idx < media.length - 1) { idx++; updateCarousel(); } };
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft' && idx > 0) { idx--; updateCarousel(); }
+    if (e.key === 'ArrowRight' && idx < media.length - 1) { idx++; updateCarousel(); }
+});
+
+/* ============================================================
+   НАВИГАЦИЯ МЕЖДУ ПАМЯТНИКАМИ
+   ============================================================ */
+const navPrev = document.getElementById('navPrev');
+const navNext = document.getElementById('navNext');
+const navCounter = document.getElementById('navCounter');
+let models = [], curIdx = 0, isTabsMode = true;
+
+function updateNav() {
+    navCounter.textContent = `${curIdx + 1} из ${models.length}`;
+    navPrev.disabled = curIdx === 0;
+    navNext.disabled = curIdx === models.length - 1;
+}
+navPrev.onclick = () => { if (curIdx > 0) { curIdx--; loadModel(models[curIdx]); } };
+navNext.onclick = () => { if (curIdx < models.length - 1) { curIdx++; loadModel(models[curIdx]); } };
+
+/* ============================================================
+   ЗАГРУЗКА МОДЕЛИ
+   ============================================================ */
+const titleEl = document.getElementById('modelTitle');
+const descEl = document.getElementById('modelDesc');
+const authorsEl = document.getElementById('authorsLine');
+const tabsEl = document.getElementById('tabsNav');
+const dropEl = document.getElementById('dropdownNav');
+const litEl = document.getElementById('literatureList');
+
+async function loadModel(cfg) {
+    titleEl.textContent = cfg.title;
+    descEl.innerHTML = '<em>Загрузка...</em>';
+    authorsEl.style.display = 'none';
+    litEl.innerHTML = '<li class="literature-empty">Загрузка...</li>';
+
+    document.querySelectorAll('.tab-btn').forEach((b, i) =>
+        b.classList.toggle('active', models[i]?.id === cfg.id));
+    dropEl.value = cfg.id;
+    curIdx = models.findIndex(m => m.id === cfg.id);
+    updateNav();
+
+    const [desc, media, lit] = await Promise.all([
+        fetchText(`obr/${cfg.id}.txt`),
+        loadMedia(cfg.id),
+        loadLiterature(cfg.id)
+    ]);
+
+    renderHeader(descEl, authorsEl, desc ? desc.trim() : '', cfg.author);
+    renderCarousel(media, cfg.id);
+    renderLiterature(litEl, lit);
+}
+
+/* ============================================================
+   СТАРТ
+   ============================================================ */
+(async function init() {
+    models = await loadTabData();
+    if (!models.length) {
+        tabsEl.innerHTML = '<div class="tab-btn">Нет данных</div>';
+        titleEl.textContent = 'Нет памятников';
+        descEl.textContent = 'Проверьте tab.txt';
+        navCounter.textContent = '0 из 0';
+        return;
+    }
+    models.forEach((m, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
+        btn.textContent = m.title;
+        btn.onclick = () => { curIdx = i; loadModel(m); };
+        tabsEl.appendChild(btn);
+        const opt = document.createElement('option');
+        opt.value = m.id; opt.textContent = m.title;
+        dropEl.appendChild(opt);
+    });
+    dropEl.onchange = e => {
+        const m = models.find(x => x.id === e.target.value);
+        if (m) { curIdx = models.indexOf(m); loadModel(m); }
+    };
+    document.getElementById('switchNav').onclick = () => {
+        isTabsMode = !isTabsMode;
+        tabsEl.style.display = isTabsMode ? 'flex' : 'none';
+        dropEl.classList.toggle('show', !isTabsMode);
+    };
+    updateNav();
+    loadModel(models[0]);
+})();
+</script>
+</body>
+</html>
