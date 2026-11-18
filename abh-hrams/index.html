@@ -119,11 +119,12 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 
 <script>
 /* ============================================================
-   НАСТРОЙКИ — ОБНОВЛЕНО ПОД НОВЫЙ РЕПОЗИТОРИЙ
+   НАСТРОЙКИ — ОБНОВЛЕНО ПОД НОВУЮ СТРУКТУРУ
    ============================================================ */
 const GITHUB_USER   = 'marcul-exp';
-const GITHUB_REPO   = 'abh-hrams';
+const GITHUB_REPO   = 'main';        // ← теперь репозиторий "main"
 const GITHUB_BRANCH = 'main';
+const FOLDER        = 'abh-hrams';   // ← подпапка, где лежат все файлы
 
 const RAW_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
 const API_URL = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents`;
@@ -136,7 +137,7 @@ const VIDEO_EXT = ['mp4','webm','mov','m4v'];
    ============================================================ */
 async function fetchText(path) {
     try {
-        const r = await fetch(`${RAW_URL}/${path}?t=${Date.now()}`);
+        const r = await fetch(`${RAW_URL}/${FOLDER}/${path}?t=${Date.now()}`);
         return r.ok ? r.text() : null;
     } catch { return null; }
 }
@@ -147,7 +148,6 @@ function showError(msg) {
     el.style.display = 'block';
 }
 
-// Парсинг ссылок вида [текст](url) в описании
 function formatLinks(raw) {
     let safe = raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     return safe.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,
@@ -156,12 +156,11 @@ function formatLinks(raw) {
 
 /* ============================================================
    ЗАГРУЗКА tab.txt
-   Формат: Название-(Автор)-slug   (slug можно не писать)
    ============================================================ */
 async function loadTabData() {
     const text = await fetchText('tab.txt');
     if (text === null) {
-        showError(`❌ Файл <code>tab.txt</code> не найден в репозитории <strong>${GITHUB_REPO}</strong> (ветка <code>${GITHUB_BRANCH}</code>).`);
+        showError(`❌ Файл <code>tab.txt</code> не найден в папке <strong>${FOLDER}/</strong> репозитория <strong>${GITHUB_REPO}</strong>.`);
         return [];
     }
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
@@ -175,12 +174,12 @@ async function loadTabData() {
 }
 
 /* ============================================================
-   ЗАГРУЗКА ФОТО/ВИДЕО — через GitHub API (регистр не важен)
+   ЗАГРУЗКА ФОТО/ВИДЕО — через GitHub API
    ============================================================ */
 async function loadMedia(id) {
-    // Попытка 1: GitHub API
+    // Попытка 1: GitHub API (учитываем подпапку FOLDER)
     try {
-        const r = await fetch(`${API_URL}/image/${id}?t=${Date.now()}`, {
+        const r = await fetch(`${API_URL}/${FOLDER}/image/${id}?t=${Date.now()}`, {
             headers: { 'Accept': 'application/vnd.github+json' }
         });
         if (r.ok) {
@@ -217,18 +216,17 @@ async function loadMedia(id) {
     const found = [];
     for (const name of variants) {
         try {
-            const r = await fetch(`${RAW_URL}/image/${id}/${name}`, { method: 'GET' });
+            const r = await fetch(`${RAW_URL}/${FOLDER}/image/${id}/${name}`, { method: 'GET' });
             if (r.ok) {
                 const ext = name.split('.').pop().toLowerCase();
                 found.push({
-                    url: `${RAW_URL}/image/${id}/${name}`,
+                    url: `${RAW_URL}/${FOLDER}/image/${id}/${name}`,
                     type: VIDEO_EXT.includes(ext) ? 'video' : 'image',
                     name
                 });
             }
         } catch {}
     }
-    // Убираем дубли и сортируем по номеру
     const seen = new Set();
     return found.filter(f => {
         const num = f.name.split('.')[0];
@@ -301,7 +299,7 @@ function renderCarousel(items, id) {
     media = items; idx = 0;
     track.innerHTML = ''; dotsEl.innerHTML = '';
     if (!items.length) {
-        track.innerHTML = `<div class="carousel-slide"><div class="carousel-placeholder"><div class="icon">🖼️</div><div>Нет медиафайлов<br><small>image/${id}/</small></div></div></div>`;
+        track.innerHTML = `<div class="carousel-slide"><div class="carousel-placeholder"><div class="icon">🖼️</div><div>Нет медиафайлов<br><small>${FOLDER}/image/${id}/</small></div></div></div>`;
         btnPrev.style.display = 'none'; btnNext.style.display = 'none';
         return;
     }
