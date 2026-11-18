@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Наши проекты и соцсети</title>
+<style>
+:root{--bg:#f3f4f6;--card:#fff;--primary:#2563eb;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--radius:16px;--shadow:0 10px 30px -5px rgba(0,0,0,.08)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+
+/* ===== Шапка ===== */
+header{background:var(--card);padding:24px 20px;box-shadow:var(--shadow);text-align:center}
+header h1{font-size:28px;font-weight:600;margin-bottom:4px}
+header p{color:var(--muted);font-size:14px}
+
+/* ===== Основная сетка ===== */
+.layout{display:grid;grid-template-columns:320px 1fr;gap:24px;max-width:1400px;margin:0 auto;padding:24px 20px}
+
+/* ===== Сайдбар ===== */
+.sidebar{display:flex;flex-direction:column;gap:24px}
+.sidebar-section{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px}
+.sidebar-section h2{font-size:18px;font-weight:600;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
+.sidebar-list{list-style:none;display:flex;flex-direction:column;gap:10px}
+.sidebar-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg);border-radius:10px;border-left:4px solid var(--primary);transition:.2s;text-decoration:none;color:var(--text)}
+.sidebar-item:hover{background:#e5e7eb;transform:translateX(4px);border-left-color:#1d4ed8}
+.sidebar-icon{width:40px;height:40px;border-radius:8px;object-fit:cover;background:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden}
+.sidebar-icon img{width:100%;height:100%;object-fit:cover}
+.sidebar-icon .emoji{font-size:22px}
+.sidebar-info{flex:1;min-width:0}
+.sidebar-info .name{font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-info .link{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-empty{color:var(--muted);font-style:italic;padding:16px;text-align:center;font-size:14px}
+
+/* ===== Основной контент ===== */
+.main{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:36px;min-height:400px}
+.main h2{font-size:24px;font-weight:600;margin-bottom:16px}
+.main p{color:var(--muted);line-height:1.7}
+
+/* ===== Ошибки ===== */
+.error-banner{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:16px 20px;border-radius:12px;margin-bottom:20px;font-size:14px;display:none;line-height:1.6}
+.error-banner code{background:rgba(0,0,0,.05);padding:2px 6px;border-radius:4px;font-size:13px}
+
+/* ===== Адаптивность ===== */
+@media(max-width:900px){
+    .layout{grid-template-columns:1fr;padding:16px}
+    .sidebar{flex-direction:row;flex-wrap:wrap}
+    .sidebar-section{flex:1;min-width:280px}
+}
+@media(max-width:600px){
+    header h1{font-size:22px}
+    .main{padding:24px}
+    .sidebar-section{padding:20px}
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h1>Наши проекты и соцсети</h1>
+    <p>Добро пожаловать!</p>
+</header>
+
+<div class="error-banner" id="errorBanner"></div>
+
+<div class="layout">
+    <!-- Левая колонка -->
+    <aside class="sidebar">
+        <div class="sidebar-section">
+            <h2>🏛 Наши проекты</h2>
+            <ul class="sidebar-list" id="projectsList">
+                <li class="sidebar-empty">Загрузка...</li>
+            </ul>
+        </div>
+        
+        <div class="sidebar-section">
+            <h2>📱 Наши соцсети</h2>
+            <ul class="sidebar-list" id="socialsList">
+                <li class="sidebar-empty">Загрузка...</li>
+            </ul>
+        </div>
+    </aside>
+    
+    <!-- Правая колонка -->
+    <main class="main">
+        <h2>О нас</h2>
+        <p>Здесь вы можете разместить информацию о себе, своей команде или организации. Этот текст можно заменить на любой другой — просто отредактируйте блок <code>&lt;main class="main"&gt;</code> в файле <code>index.html</code>.</p>
+        <p style="margin-top:16px">Слева вы видите списки проектов и социальных сетей, которые загружаются автоматически из файлов на GitHub. Чтобы добавить новый проект или соцсеть — просто отредактируйте соответствующий CSV-файл в репозитории.</p>
+    </main>
+</div>
+
+<script>
+/* ============================================================
+   НАСТРОЙКИ — ОБНОВЛЕНО ПОД РЕПОЗИТОРИЙ "main"
+   ============================================================ */
+const GITHUB_USER   = 'marcul-exp';
+const GITHUB_REPO   = 'main';       // <-- Изменено здесь
+const GITHUB_BRANCH = 'main';
+
+const RAW_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
+const API_URL = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents`;
+
+/* ============================================================
+   УТИЛИТЫ
+   ============================================================ */
+async function fetchText(path) {
+    try {
+        const r = await fetch(`${RAW_URL}/${path}?t=${Date.now()}`);
+        return r.ok ? r.text() : null;
+    } catch { return null; }
+}
+
+function showError(msg) {
+    const el = document.getElementById('errorBanner');
+    el.innerHTML = msg;
+    el.style.display = 'block';
+}
+
+/* ============================================================
+   ЗАГРУЗКА CSV (Название;Ссылка;Иконка)
+   Примечание: 3-й столбец (Иконка) необязателен. 
+   Если его нет, код автоматически покажет эмодзи.
+   ============================================================ */
+async function loadCSV(filename) {
+    const text = await fetchText(filename);
+    if (!text) return [];
+    
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const items = [];
+    
+    for (const line of lines) {
+        // Пропускаем заголовок
+        if (line.toLowerCase().startsWith('название;')) continue;
+        
+        const parts = line.split(';');
+        if (parts.length >= 2) {
+            const name = parts[0].trim();
+            const url = parts[1].trim();
+            const icon = parts[2] ? parts[2].trim() : ''; // Безопасно обрабатывает отсутствие 3-го столбца
+            if (name && url) {
+                items.push({ name, url, icon });
+            }
+        }
+    }
+    return items;
+}
+
+/* ============================================================
+   ПРОВЕРКА СУЩЕСТВОВАНИЯ ИКОНКИ
+   ============================================================ */
+async function iconExists(iconName) {
+    if (!iconName) return false;
+    try {
+        const r = await fetch(`${RAW_URL}/image/${iconName}?t=${Date.now()}`, { method: 'GET' });
+        return r.ok;
+    } catch { return false; }
+}
+
+/* ============================================================
+   РЕНДЕР СПИСКА
+   ============================================================ */
+function renderList(containerId, items, defaultEmoji) {
+    const container = document.getElementById(containerId);
+    
+    if (!items.length) {
+        container.innerHTML = `<li class="sidebar-empty">Список пуст</li>`;
+        return;
+    }
+    
+    container.innerHTML = items.map(item => `
+        <li>
+            <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="sidebar-item">
+                <div class="sidebar-icon" data-icon="${item.icon}">
+                    <span class="emoji">${defaultEmoji}</span>
+                </div>
+                <div class="sidebar-info">
+                    <div class="name">${item.name}</div>
+                    <div class="link">${item.url}</div>
+                </div>
+            </a>
+        </li>
+    `).join('');
+    
+    // Загружаем иконки (если они указаны в CSV и существуют)
+    items.forEach((item, i) => {
+        if (item.icon) {
+            const iconEl = container.querySelectorAll('.sidebar-icon')[i];
+            iconExists(item.icon).then(exists => {
+                if (exists) {
+                    iconEl.innerHTML = `<img src="${RAW_URL}/image/${item.icon}" alt="${item.name}">`;
+                }
+            });
+        }
+    });
+}
+
+/* ============================================================
+   СТАРТ
+   ============================================================ */
+(async function init() {
+    const [projects, socials] = await Promise.all([
+        loadCSV('projects.csv'),
+        loadCSV('socials.csv')
+    ]);
+    
+    renderList('projectsList', projects, '🏛');
+    renderList('socialsList', socials, '📱');
+})();
+</script>
+
+</body>
+</html>
