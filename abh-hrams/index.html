@@ -8,7 +8,25 @@
 :root{--bg:#f3f4f6;--card:#fff;--primary:#2563eb;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--radius:16px;--shadow:0 10px 30px -5px rgba(0,0,0,.08)}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
-.wrapper{max-width:1200px;margin:0 auto;padding:40px 20px}
+
+/* ===== Layout: сайдбар + контент ===== */
+.layout{display:grid;grid-template-columns:300px 1fr;gap:24px;max-width:1400px;margin:0 auto;padding:24px 20px}
+
+/* ===== Сайдбар ===== */
+.sidebar{display:flex;flex-direction:column;gap:24px;align-self:start;position:sticky;top:24px}
+.sidebar-section{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
+.sidebar-section h2{font-size:17px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
+.sidebar-list{list-style:none;display:flex;flex-direction:column;gap:8px}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg);border-radius:10px;border-left:4px solid var(--primary);transition:.2s;text-decoration:none;color:var(--text)}
+.sidebar-item:hover{background:#e5e7eb;transform:translateX(4px);border-left-color:#1d4ed8}
+.sidebar-emoji{font-size:20px;flex-shrink:0;width:28px;text-align:center}
+.sidebar-info{flex:1;min-width:0}
+.sidebar-info .name{font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-info .link{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-empty{color:var(--muted);font-style:italic;padding:12px;text-align:center;font-size:13px}
+
+/* ===== Основной блок ===== */
+.wrapper{max-width:100%;padding:0}
 
 .controls{display:flex;gap:12px;align-items:center;margin-bottom:24px;flex-wrap:wrap}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;flex:1}
@@ -64,67 +82,93 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .error-banner{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:16px 20px;border-radius:12px;margin-bottom:20px;font-size:14px;display:none;line-height:1.6}
 .error-banner code{background:rgba(0,0,0,.05);padding:2px 6px;border-radius:4px;font-size:13px}
 
+@media(max-width:900px){
+    .layout{grid-template-columns:1fr;padding:16px}
+    .sidebar{position:static;flex-direction:row;flex-wrap:wrap}
+    .sidebar-section{flex:1;min-width:260px}
+}
 @media(max-width:768px){
     .card{padding:24px}
-    .wrapper{padding:20px 16px}
     .controls{flex-direction:column;align-items:stretch}
     .btn-toggle{margin-left:0}
     .carousel{aspect-ratio:1/1}
     .card-header h1{font-size:24px}
     .nav-arrows{flex-wrap:wrap}
+    .sidebar{flex-direction:column}
 }
 </style>
 </head>
 <body>
-<main class="wrapper">
-    <div class="error-banner" id="errorBanner"></div>
-    
-    <div class="nav-arrows">
-        <button class="nav-btn" id="navPrev">← Предыдущий</button>
-        <div class="nav-counter" id="navCounter">0 из 0</div>
-        <button class="nav-btn" id="navNext">Следующий →</button>
-    </div>
-    
-    <nav class="controls">
-        <div class="tabs" id="tabsNav"></div>
-        <select class="dropdown" id="dropdownNav"></select>
-        <button class="btn-toggle" id="switchNav">🔄 Переключить вид</button>
-    </nav>
-    
-    <div class="card">
-        <div class="card-header">
-            <h1 id="modelTitle">Загрузка...</h1>
-            <div class="description" id="modelDesc"></div>
-            <div class="authors-line" id="authorsLine" style="display:none"></div>
-        </div>
-        
-        <div class="media-container">
-            <div class="carousel" id="carousel">
-                <div class="carousel-track" id="carouselTrack"></div>
-                <button class="carousel-btn prev" id="carouselPrev">‹</button>
-                <button class="carousel-btn next" id="carouselNext">›</button>
-                <div class="carousel-dots" id="carouselDots"></div>
-                <div class="carousel-counter" id="carouselCounter" style="display:none"></div>
-            </div>
-        </div>
-        
-        <div class="literature-section">
-            <h2>📖 Использованная литература</h2>
-            <ul class="literature-list" id="literatureList">
-                <li class="literature-empty">Загрузка...</li>
+
+<div class="layout">
+    <!-- ===== Левая колонка ===== -->
+    <aside class="sidebar">
+        <div class="sidebar-section">
+            <h2>📂 Разделы</h2>
+            <ul class="sidebar-list" id="sectionsList">
+                <li class="sidebar-empty">Загрузка...</li>
             </ul>
         </div>
-    </div>
-</main>
+
+        <div class="sidebar-section">
+            <h2>📱 Соцсети</h2>
+            <ul class="sidebar-list" id="socialsList">
+                <li class="sidebar-empty">Загрузка...</li>
+            </ul>
+        </div>
+    </aside>
+
+    <!-- ===== Правая колонка: храмы ===== -->
+    <main class="wrapper">
+        <div class="error-banner" id="errorBanner"></div>
+
+        <div class="nav-arrows">
+            <button class="nav-btn" id="navPrev">← Предыдущий</button>
+            <div class="nav-counter" id="navCounter">0 из 0</div>
+            <button class="nav-btn" id="navNext">Следующий →</button>
+        </div>
+
+        <nav class="controls">
+            <div class="tabs" id="tabsNav"></div>
+            <select class="dropdown" id="dropdownNav"></select>
+            <button class="btn-toggle" id="switchNav">🔄 Переключить вид</button>
+        </nav>
+
+        <div class="card">
+            <div class="card-header">
+                <h1 id="modelTitle">Загрузка...</h1>
+                <div class="description" id="modelDesc"></div>
+                <div class="authors-line" id="authorsLine" style="display:none"></div>
+            </div>
+
+            <div class="media-container">
+                <div class="carousel" id="carousel">
+                    <div class="carousel-track" id="carouselTrack"></div>
+                    <button class="carousel-btn prev" id="carouselPrev">‹</button>
+                    <button class="carousel-btn next" id="carouselNext">›</button>
+                    <div class="carousel-dots" id="carouselDots"></div>
+                    <div class="carousel-counter" id="carouselCounter" style="display:none"></div>
+                </div>
+            </div>
+
+            <div class="literature-section">
+                <h2>📖 Использованная литература</h2>
+                <ul class="literature-list" id="literatureList">
+                    <li class="literature-empty">Загрузка...</li>
+                </ul>
+            </div>
+        </div>
+    </main>
+</div>
 
 <script>
 /* ============================================================
-   НАСТРОЙКИ — ОБНОВЛЕНО ПОД НОВУЮ СТРУКТУРУ
+   НАСТРОЙКИ
    ============================================================ */
 const GITHUB_USER   = 'marcul-exp';
-const GITHUB_REPO   = 'main';        // ← теперь репозиторий "main"
+const GITHUB_REPO   = 'main';
 const GITHUB_BRANCH = 'main';
-const FOLDER        = 'abh-hrams';   // ← подпапка, где лежат все файлы
+const FOLDER        = 'abh-hrams';   // подпапка с храмами
 
 const RAW_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
 const API_URL = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents`;
@@ -135,9 +179,18 @@ const VIDEO_EXT = ['mp4','webm','mov','m4v'];
 /* ============================================================
    УТИЛИТЫ
    ============================================================ */
+// Загрузка из подпапки abh-hrams/ (tab.txt, obr/, literature/, image/)
 async function fetchText(path) {
     try {
         const r = await fetch(`${RAW_URL}/${FOLDER}/${path}?t=${Date.now()}`);
+        return r.ok ? r.text() : null;
+    } catch { return null; }
+}
+
+// Загрузка из КОРНЯ репозитория (sections.csv, socials.csv) — без FOLDER
+async function fetchRootText(path) {
+    try {
+        const r = await fetch(`${RAW_URL}/${path}?t=${Date.now()}`);
         return r.ok ? r.text() : null;
     } catch { return null; }
 }
@@ -154,13 +207,26 @@ function formatLinks(raw) {
         '<a href="$2" target="_blank" rel="noopener noreferrer">$1 ↗</a>');
 }
 
+// Парсинг CSV формата "Название;Ссылка"
+function parseCSV(text) {
+    if (!text) return [];
+    return text.split('\n').map(l => l.trim()).filter(Boolean)
+        .filter(l => !l.toLowerCase().startsWith('название;'))
+        .map(line => {
+            const parts = line.split(';');
+            const name = (parts[0] || '').trim();
+            const url  = (parts[1] || '').trim();
+            return name && url ? { name, url } : null;
+        }).filter(Boolean);
+}
+
 /* ============================================================
    ЗАГРУЗКА tab.txt
    ============================================================ */
 async function loadTabData() {
     const text = await fetchText('tab.txt');
     if (text === null) {
-        showError(`❌ Файл <code>tab.txt</code> не найден в папке <strong>${FOLDER}/</strong> репозитория <strong>${GITHUB_REPO}</strong>.`);
+        showError(`❌ Файл <code>tab.txt</code> не найден в папке <strong>${FOLDER}/</strong>.`);
         return [];
     }
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
@@ -174,10 +240,9 @@ async function loadTabData() {
 }
 
 /* ============================================================
-   ЗАГРУЗКА ФОТО/ВИДЕО — через GitHub API
+   ЗАГРУЗКА ФОТО/ВИДЕО
    ============================================================ */
 async function loadMedia(id) {
-    // Попытка 1: GitHub API (учитываем подпапку FOLDER)
     try {
         const r = await fetch(`${API_URL}/${FOLDER}/image/${id}?t=${Date.now()}`, {
             headers: { 'Accept': 'application/vnd.github+json' }
@@ -194,18 +259,13 @@ async function loadMedia(id) {
                     .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
                     .map(f => {
                         const ext = f.name.split('.').pop().toLowerCase();
-                        return {
-                            url: f.download_url,
-                            type: VIDEO_EXT.includes(ext) ? 'video' : 'image',
-                            name: f.name
-                        };
+                        return { url: f.download_url, type: VIDEO_EXT.includes(ext) ? 'video' : 'image', name: f.name };
                     });
                 if (items.length) return items;
             }
         }
     } catch (e) { console.warn('API не сработал, пробую перебор:', e); }
 
-    // Попытка 2 (fallback): перебор имён с обоими регистрами
     const variants = [];
     for (let n = 1; n <= 30; n++) {
         for (const ext of [...IMAGE_EXT, ...VIDEO_EXT]) {
@@ -219,11 +279,7 @@ async function loadMedia(id) {
             const r = await fetch(`${RAW_URL}/${FOLDER}/image/${id}/${name}`, { method: 'GET' });
             if (r.ok) {
                 const ext = name.split('.').pop().toLowerCase();
-                found.push({
-                    url: `${RAW_URL}/${FOLDER}/image/${id}/${name}`,
-                    type: VIDEO_EXT.includes(ext) ? 'video' : 'image',
-                    name
-                });
+                found.push({ url: `${RAW_URL}/${FOLDER}/image/${id}/${name}`, type: VIDEO_EXT.includes(ext) ? 'video' : 'image', name });
             }
         } catch {}
     }
@@ -236,7 +292,7 @@ async function loadMedia(id) {
 }
 
 /* ============================================================
-   ЗАГРУЗКА ЛИТЕРАТУРЫ (CSV: Название;Ссылка)
+   ЗАГРУЗКА ЛИТЕРАТУРЫ (из подпапки abh-hrams/literature/)
    ============================================================ */
 async function loadLiterature(id) {
     const text = await fetchText(`literature/${id}.csv`);
@@ -250,7 +306,29 @@ async function loadLiterature(id) {
 }
 
 /* ============================================================
-   РЕНДЕР
+   РЕНДЕР САЙДБАРА (Разделы / Соцсети)
+   ============================================================ */
+function renderSidebar(containerId, items, emoji) {
+    const container = document.getElementById(containerId);
+    if (!items.length) {
+        container.innerHTML = `<li class="sidebar-empty">Список пуст</li>`;
+        return;
+    }
+    container.innerHTML = items.map(item => `
+        <li>
+            <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="sidebar-item">
+                <span class="sidebar-emoji">${emoji}</span>
+                <div class="sidebar-info">
+                    <div class="name">${item.name}</div>
+                    <div class="link">${item.url}</div>
+                </div>
+            </a>
+        </li>
+    `).join('');
+}
+
+/* ============================================================
+   РЕНДЕР КАРТОЧКИ
    ============================================================ */
 function renderHeader(descEl, authorsEl, description, author) {
     descEl.innerHTML = description ? formatLinks(description) : '<em>Описание отсутствует.</em>';
@@ -382,6 +460,15 @@ async function loadModel(cfg) {
    СТАРТ
    ============================================================ */
 (async function init() {
+    // 1. Сайдбар — грузим CSV из КОРНЯ репозитория параллельно с tab.txt
+    const [sectionsText, socialsText] = await Promise.all([
+        fetchRootText('sections.csv'),
+        fetchRootText('socials.csv')
+    ]);
+    renderSidebar('sectionsList', parseCSV(sectionsText), '📂');
+    renderSidebar('socialsList',  parseCSV(socialsText),  '📱');
+
+    // 2. Храмы
     models = await loadTabData();
     if (!models.length) {
         tabsEl.innerHTML = '<div class="tab-btn">Нет данных</div>';
