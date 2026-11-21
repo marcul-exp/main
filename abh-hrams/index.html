@@ -70,14 +70,14 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
     position: relative;
     z-index: 1;
 }
-/* Делаем iframe и div Яндекс.Карт адаптивными, игнорируя жесткие width/height из конструктора */
-#map iframe, 
-#map div[style*="width"], 
+/* Делаем iframe Яндекс.Карт адаптивным, игнорируя жесткие width/height из конструктора */
+#map iframe,
+#map div[style*="width"],
 #map ymaps {
     width: 100% !important;
     max-width: 100% !important;
     height: auto !important;
-    aspect-ratio: 873 / 710; /* Сохраняем пропорции из конструктора */
+    aspect-ratio: 873 / 710;
     min-height: 350px;
 }
 
@@ -204,8 +204,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 const GITHUB_USER   = 'marcul-exp';
 const GITHUB_REPO   = 'main';
 const GITHUB_BRANCH = 'main';
-const FOLDER        = 'abh-hrams';   // подпапка с храмами
-const MAPS_FOLDER   = 'carts';       // папка с картами (лежит в корне репозитория)
+const FOLDER        = 'abh-hrams';   // подпапка с храмами (внутри неё лежит и carts/)
 
 const RAW_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
 const API_URL = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents`;
@@ -216,6 +215,7 @@ const VIDEO_EXT = ['mp4','webm','mov','m4v'];
 /* ============================================================
    УТИЛИТЫ
    ============================================================ */
+// Загрузка из папки abh-hrams/ (tab.txt, obr/, carts/, literature/, image/)
 async function fetchText(path) {
     try {
         const r = await fetch(`${RAW_URL}/${FOLDER}/${path}?t=${Date.now()}`);
@@ -223,6 +223,7 @@ async function fetchText(path) {
     } catch { return null; }
 }
 
+// Загрузка из КОРНЯ репозитория (sections.csv, socials.csv)
 async function fetchRootText(path) {
     try {
         const r = await fetch(`${RAW_URL}/${path}?t=${Date.now()}`);
@@ -255,12 +256,13 @@ function parseCSV(text) {
 }
 
 /* ============================================================
-   ЗАГРУЗКА ДАННЫХ
+   ЗАГРУЗКА tab.txt (сначала в папке, потом в корне)
    ============================================================ */
 async function loadTabData() {
-    const text = await fetchText('tab.txt');
+    let text = await fetchText('tab.txt');
+    if (text === null) text = await fetchRootText('tab.txt'); // fallback на корень
     if (text === null) {
-        showError(`❌ Файл <code>tab.txt</code> не найден в папке <strong>${FOLDER}/</strong>.`);
+        showError(`❌ Файл <code>tab.txt</code> не найден.`);
         return [];
     }
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
@@ -273,6 +275,9 @@ async function loadTabData() {
     });
 }
 
+/* ============================================================
+   ЗАГРУЗКА ФОТО/ВИДЕО
+   ============================================================ */
 async function loadMedia(id) {
     try {
         const r = await fetch(`${API_URL}/${FOLDER}/image/${id}?t=${Date.now()}`, {
@@ -322,6 +327,9 @@ async function loadMedia(id) {
     }).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 }
 
+/* ============================================================
+   ЗАГРУЗКА ЛИТЕРАТУРЫ
+   ============================================================ */
 async function loadLiterature(id) {
     const text = await fetchText(`literature/${id}.csv`);
     if (!text) return [];
@@ -334,7 +342,9 @@ async function loadLiterature(id) {
 }
 
 /* ============================================================
-   ЗАГРУЗКА И ОТРИСОВКА КАРТЫ (Исправлено для Яндекс.Карт)
+   ЗАГРУЗКА И ОТРИСОВКА КАРТЫ
+   ВАЖНО: папка carts лежит ВНУТРИ abh-hrams, поэтому используем
+   fetchText (он добавляет префикс abh-hrams/), а НЕ fetchRootText!
    ============================================================ */
 async function loadMap(id) {
     const mapContainer = document.getElementById('mapContainer');
@@ -344,39 +354,40 @@ async function loadMap(id) {
     mapEl.innerHTML = '';
     mapContainer.style.display = 'none';
 
-    // 2. Пытаемся загрузить файл из папки carts (в корне репозитория)
-    const mapCode = await fetchRootText(`${MAPS_FOLDER}/${id}.txt`);
+    // 2. Пытаемся загрузить файл abh-hrams/carts/{id}.txt
+    const mapCode = await fetchText(`carts/${id}.txt`);
 
-    // 3. Если файла нет или он пустой, просто выходим (карта не показывается)
+    // 3. Если файла нет или он пустой — скрываем блок, ничего не меняется
     if (!mapCode || mapCode.trim() === '') {
         return;
     }
 
-    // 4. Если файл есть, показываем контейнер
+    // 4. Файл есть — показываем контейнер
     mapContainer.style.display = 'block';
 
-    // 5. Безопасная и корректная вставка скрипта Яндекс.Карт
+    // 5. Корректно вставляем скрипт Яндекс.Конструктора
     try {
-        // Создаем временный элемент, чтобы браузер распарсил HTML-строку
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = mapCode.trim();
 
-        // Ищем тег script внутри загруженного кода
         const scriptTag = tempDiv.querySelector('script');
-        
+
         if (scriptTag && scriptTag.src) {
-            // Если это внешний скрипт (как в Яндекс.Конструкторе), создаем его заново.
-            // Это единственный надежный способ заставить браузер выполнить динамически загруженный скрипт.
+            // Внешний скрипт (Яндекс.Конструктор): пересоздаём его через createElement,
+            // иначе браузер не выполнит innerHTML-вставленный <script src=...>
             const newScript = document.createElement('script');
             newScript.src = scriptTag.src;
-            newScript.async = scriptTag.hasAttribute('async');
+            newScript.async = true;
             newScript.charset = scriptTag.getAttribute('charset') || 'utf-8';
             newScript.type = scriptTag.type || 'text/javascript';
-            
-            // Добавляем скрипт в контейнер карты. Скрипт Яндекс.Карт сам создаст iframe/div внутри.
+            mapEl.appendChild(newScript);
+        } else if (scriptTag) {
+            // Inline-скрипт без src — пересоздаём и его
+            const newScript = document.createElement('script');
+            newScript.textContent = scriptTag.textContent;
             mapEl.appendChild(newScript);
         } else {
-            // Fallback: если это просто HTML-разметка или inline-скрипт без src
+            // Просто HTML-разметка (например, готовый iframe)
             mapEl.appendChild(tempDiv);
         }
     } catch (e) {
@@ -525,7 +536,6 @@ async function loadModel(cfg) {
     curIdx = models.findIndex(m => m.id === cfg.id);
     updateNav();
 
-    // Загружаем данные параллельно для скорости
     const [desc, mediaItems, lit] = await Promise.all([
         fetchText(`obr/${cfg.id}.txt`),
         loadMedia(cfg.id),
@@ -533,14 +543,12 @@ async function loadModel(cfg) {
     ]);
 
     renderHeader(descEl, authorsEl, desc ? desc.trim() : '', cfg.author);
-    
-    // Загружаем и отображаем карту (отдельно, т.к. требует манипуляций с DOM)
+
     await loadMap(cfg.id);
-    
+
     renderCarousel(mediaItems, cfg.id);
     renderLiterature(litEl, lit);
-    
-    // Плавная прокрутка вверх при смене модели на мобильных устройствах
+
     if (window.innerWidth < 900) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -565,30 +573,30 @@ async function loadModel(cfg) {
         navCounter.textContent = '0 из 0';
         return;
     }
-    
+
     models.forEach((m, i) => {
         const btn = document.createElement('button');
         btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
         btn.textContent = m.title;
         btn.onclick = () => { curIdx = i; loadModel(m); };
         tabsEl.appendChild(btn);
-        
+
         const opt = document.createElement('option');
         opt.value = m.id; opt.textContent = m.title;
         dropEl.appendChild(opt);
     });
-    
+
     dropEl.onchange = e => {
         const m = models.find(x => x.id === e.target.value);
         if (m) { curIdx = models.indexOf(m); loadModel(m); }
     };
-    
+
     document.getElementById('switchNav').onclick = () => {
         isTabsMode = !isTabsMode;
         tabsEl.style.display = isTabsMode ? 'flex' : 'none';
         dropEl.classList.toggle('show', !isTabsMode);
     };
-    
+
     updateNav();
     loadModel(models[0]);
 })();
