@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Реконструкции исторических памятников</title>
+
+<!-- Подключение библиотеки Leaflet для карт -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
 <style>
 :root{--bg:#f3f4f6;--card:#fff;--primary:#2563eb;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--radius:16px;--shadow:0 10px 30px -5px rgba(0,0,0,.08)}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -52,6 +57,23 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .description a:hover{color:#c0392b;border-bottom-style:solid}
 .authors-line{font-size:14px;color:var(--muted);padding-top:12px;border-top:1px dashed var(--border);font-weight:500}
 
+/* ===== Стили для карты ===== */
+.map-container {
+    width: 100%;
+    margin-bottom: 32px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    display: none; /* Скрыто по умолчанию, показывается JS-ом */
+}
+#map {
+    width: 100%;
+    height: 450px;
+    background: #e5e7eb;
+    z-index: 1;
+}
+
 .media-container{width:100%;margin-bottom:32px}
 .carousel{position:relative;aspect-ratio:4/3;border-radius:12px;overflow:hidden;background:#000;border:1px solid var(--border)}
 .carousel-track{display:flex;height:100%;transition:transform .4s cubic-bezier(.4,0,.2,1)}
@@ -92,6 +114,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
     .controls{flex-direction:column;align-items:stretch}
     .btn-toggle{margin-left:0}
     .carousel{aspect-ratio:1/1}
+    #map { height: 350px; }
     .card-header h1{font-size:24px}
     .nav-arrows{flex-wrap:wrap}
     .sidebar{flex-direction:column}
@@ -141,6 +164,11 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
                 <div class="authors-line" id="authorsLine" style="display:none"></div>
             </div>
 
+            <!-- Контейнер для карты -->
+            <div class="map-container" id="mapContainer">
+                <div id="map"></div>
+            </div>
+
             <div class="media-container">
                 <div class="carousel" id="carousel">
                     <div class="carousel-track" id="carouselTrack"></div>
@@ -169,6 +197,7 @@ const GITHUB_USER   = 'marcul-exp';
 const GITHUB_REPO   = 'main';
 const GITHUB_BRANCH = 'main';
 const FOLDER        = 'abh-hrams';   // подпапка с храмами
+const MAPS_FOLDER   = 'carts';       // папка с картами (лежит в корне репозитория, рядом с кодом)
 
 const RAW_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
 const API_URL = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents`;
@@ -179,7 +208,6 @@ const VIDEO_EXT = ['mp4','webm','mov','m4v'];
 /* ============================================================
    УТИЛИТЫ
    ============================================================ */
-// Загрузка из подпапки abh-hrams/ (tab.txt, obr/, literature/, image/)
 async function fetchText(path) {
     try {
         const r = await fetch(`${RAW_URL}/${FOLDER}/${path}?t=${Date.now()}`);
@@ -187,7 +215,6 @@ async function fetchText(path) {
     } catch { return null; }
 }
 
-// Загрузка из КОРНЯ репозитория (sections.csv, socials.csv) — без FOLDER
 async function fetchRootText(path) {
     try {
         const r = await fetch(`${RAW_URL}/${path}?t=${Date.now()}`);
@@ -207,7 +234,6 @@ function formatLinks(raw) {
         '<a href="$2" target="_blank" rel="noopener noreferrer">$1 ↗</a>');
 }
 
-// Парсинг CSV формата "Название;Ссылка"
 function parseCSV(text) {
     if (!text) return [];
     return text.split('\n').map(l => l.trim()).filter(Boolean)
@@ -221,7 +247,7 @@ function parseCSV(text) {
 }
 
 /* ============================================================
-   ЗАГРУЗКА tab.txt
+   ЗАГРУЗКА ДАННЫХ
    ============================================================ */
 async function loadTabData() {
     const text = await fetchText('tab.txt');
@@ -239,9 +265,6 @@ async function loadTabData() {
     });
 }
 
-/* ============================================================
-   ЗАГРУЗКА ФОТО/ВИДЕО
-   ============================================================ */
 async function loadMedia(id) {
     try {
         const r = await fetch(`${API_URL}/${FOLDER}/image/${id}?t=${Date.now()}`, {
@@ -291,9 +314,6 @@ async function loadMedia(id) {
     }).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 }
 
-/* ============================================================
-   ЗАГРУЗКА ЛИТЕРАТУРЫ (из подпапки abh-hrams/literature/)
-   ============================================================ */
 async function loadLiterature(id) {
     const text = await fetchText(`literature/${id}.csv`);
     if (!text) return [];
@@ -306,7 +326,51 @@ async function loadLiterature(id) {
 }
 
 /* ============================================================
-   РЕНДЕР САЙДБАРА (Разделы / Соцсети)
+   ЗАГРУЗКА И ОТРИСОВКА КАРТЫ
+   ============================================================ */
+let currentMap = null; // Храним экземпляр карты для корректного удаления
+
+async function loadMap(id) {
+    const mapContainer = document.getElementById('mapContainer');
+    const mapEl = document.getElementById('map');
+
+    // 1. Очищаем предыдущую карту, если она была
+    if (currentMap) {
+        currentMap.remove();
+        currentMap = null;
+    }
+    mapEl.innerHTML = ''; // Очищаем контейнер
+
+    // 2. Пытаемся загрузить JS-код карты из папки carts
+    // Если папка carts лежит внутри abh-hrams, замените fetchRootText на fetchText(`carts/${id}.txt`)
+    const mapCode = await fetchRootText(`${MAPS_FOLDER}/${id}.txt`);
+
+    // 3. Если файла нет или он пустой, скрываем контейнер и выходим
+    if (!mapCode || mapCode.trim() === '') {
+        mapContainer.style.display = 'none';
+        return;
+    }
+
+    // 4. Если файл есть, показываем контейнер
+    mapContainer.style.display = 'block';
+
+    // 5. Безопасно выполняем загруженный JS-код
+    try {
+        // Очищаем глобальную переменную map, чтобы избежать конфликтов при переключении
+        window.mapInstance = undefined; 
+        
+        const script = document.createElement('script');
+        script.textContent = mapCode;
+        document.head.appendChild(script);
+        document.head.removeChild(script); // Удаляем тег после выполнения, чтобы не засорять DOM
+    } catch (e) {
+        console.error("Ошибка выполнения кода карты:", e);
+        mapContainer.style.display = 'none';
+    }
+}
+
+/* ============================================================
+   РЕНДЕР САЙДБАРА
    ============================================================ */
 function renderSidebar(containerId, items, emoji) {
     const container = document.getElementById(containerId);
@@ -445,22 +509,31 @@ async function loadModel(cfg) {
     curIdx = models.findIndex(m => m.id === cfg.id);
     updateNav();
 
-    const [desc, media, lit] = await Promise.all([
+    // Загружаем данные параллельно
+    const [desc, mediaItems, lit] = await Promise.all([
         fetchText(`obr/${cfg.id}.txt`),
         loadMedia(cfg.id),
         loadLiterature(cfg.id)
     ]);
 
     renderHeader(descEl, authorsEl, desc ? desc.trim() : '', cfg.author);
-    renderCarousel(media, cfg.id);
+    
+    // Загружаем и отображаем карту
+    await loadMap(cfg.id);
+    
+    renderCarousel(mediaItems, cfg.id);
     renderLiterature(litEl, lit);
+    
+    // Прокрутка вверх при смене модели (опционально, для удобства на мобильных)
+    if (window.innerWidth < 900) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 }
 
 /* ============================================================
    СТАРТ
    ============================================================ */
 (async function init() {
-    // 1. Сайдбар — грузим CSV из КОРНЯ репозитория параллельно с tab.txt
     const [sectionsText, socialsText] = await Promise.all([
         fetchRootText('sections.csv'),
         fetchRootText('socials.csv')
@@ -468,7 +541,6 @@ async function loadModel(cfg) {
     renderSidebar('sectionsList', parseCSV(sectionsText), '📂');
     renderSidebar('socialsList',  parseCSV(socialsText),  '📱');
 
-    // 2. Храмы
     models = await loadTabData();
     if (!models.length) {
         tabsEl.innerHTML = '<div class="tab-btn">Нет данных</div>';
@@ -477,25 +549,30 @@ async function loadModel(cfg) {
         navCounter.textContent = '0 из 0';
         return;
     }
+    
     models.forEach((m, i) => {
         const btn = document.createElement('button');
         btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
         btn.textContent = m.title;
         btn.onclick = () => { curIdx = i; loadModel(m); };
         tabsEl.appendChild(btn);
+        
         const opt = document.createElement('option');
         opt.value = m.id; opt.textContent = m.title;
         dropEl.appendChild(opt);
     });
+    
     dropEl.onchange = e => {
         const m = models.find(x => x.id === e.target.value);
         if (m) { curIdx = models.indexOf(m); loadModel(m); }
     };
+    
     document.getElementById('switchNav').onclick = () => {
         isTabsMode = !isTabsMode;
         tabsEl.style.display = isTabsMode ? 'flex' : 'none';
         dropEl.classList.toggle('show', !isTabsMode);
     };
+    
     updateNav();
     loadModel(models[0]);
 })();
