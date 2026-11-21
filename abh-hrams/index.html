@@ -5,10 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Реконструкции исторических памятников</title>
 
-<!-- Подключение библиотеки Leaflet для карт -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
 <style>
 :root{--bg:#f3f4f6;--card:#fff;--primary:#2563eb;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--radius:16px;--shadow:0 10px 30px -5px rgba(0,0,0,.08)}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -57,7 +53,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .description a:hover{color:#c0392b;border-bottom-style:solid}
 .authors-line{font-size:14px;color:var(--muted);padding-top:12px;border-top:1px dashed var(--border);font-weight:500}
 
-/* ===== Стили для карты ===== */
+/* ===== Стили для карты (Яндекс и другие) ===== */
 .map-container {
     width: 100%;
     margin-bottom: 32px;
@@ -66,12 +62,23 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
     border: 1px solid var(--border);
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     display: none; /* Скрыто по умолчанию, показывается JS-ом */
+    background: #f0f0f0;
 }
 #map {
     width: 100%;
-    height: 450px;
-    background: #e5e7eb;
+    min-height: 400px;
+    position: relative;
     z-index: 1;
+}
+/* Делаем iframe и div Яндекс.Карт адаптивными, игнорируя жесткие width/height из конструктора */
+#map iframe, 
+#map div[style*="width"], 
+#map ymaps {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 873 / 710; /* Сохраняем пропорции из конструктора */
+    min-height: 350px;
 }
 
 .media-container{width:100%;margin-bottom:32px}
@@ -114,7 +121,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
     .controls{flex-direction:column;align-items:stretch}
     .btn-toggle{margin-left:0}
     .carousel{aspect-ratio:1/1}
-    #map { height: 350px; }
+    #map { min-height: 300px; }
+    #map iframe, #map div[style*="width"], #map ymaps { aspect-ratio: 1 / 0.8; min-height: 300px; }
     .card-header h1{font-size:24px}
     .nav-arrows{flex-wrap:wrap}
     .sidebar{flex-direction:column}
@@ -197,7 +205,7 @@ const GITHUB_USER   = 'marcul-exp';
 const GITHUB_REPO   = 'main';
 const GITHUB_BRANCH = 'main';
 const FOLDER        = 'abh-hrams';   // подпапка с храмами
-const MAPS_FOLDER   = 'carts';       // папка с картами (лежит в корне репозитория, рядом с кодом)
+const MAPS_FOLDER   = 'carts';       // папка с картами (лежит в корне репозитория)
 
 const RAW_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
 const API_URL = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents`;
@@ -326,45 +334,53 @@ async function loadLiterature(id) {
 }
 
 /* ============================================================
-   ЗАГРУЗКА И ОТРИСОВКА КАРТЫ
+   ЗАГРУЗКА И ОТРИСОВКА КАРТЫ (Исправлено для Яндекс.Карт)
    ============================================================ */
-let currentMap = null; // Храним экземпляр карты для корректного удаления
-
 async function loadMap(id) {
     const mapContainer = document.getElementById('mapContainer');
     const mapEl = document.getElementById('map');
 
-    // 1. Очищаем предыдущую карту, если она была
-    if (currentMap) {
-        currentMap.remove();
-        currentMap = null;
-    }
-    mapEl.innerHTML = ''; // Очищаем контейнер
+    // 1. Очищаем предыдущую карту и скрываем контейнер
+    mapEl.innerHTML = '';
+    mapContainer.style.display = 'none';
 
-    // 2. Пытаемся загрузить JS-код карты из папки carts
-    // Если папка carts лежит внутри abh-hrams, замените fetchRootText на fetchText(`carts/${id}.txt`)
+    // 2. Пытаемся загрузить файл из папки carts (в корне репозитория)
     const mapCode = await fetchRootText(`${MAPS_FOLDER}/${id}.txt`);
 
-    // 3. Если файла нет или он пустой, скрываем контейнер и выходим
+    // 3. Если файла нет или он пустой, просто выходим (карта не показывается)
     if (!mapCode || mapCode.trim() === '') {
-        mapContainer.style.display = 'none';
         return;
     }
 
     // 4. Если файл есть, показываем контейнер
     mapContainer.style.display = 'block';
 
-    // 5. Безопасно выполняем загруженный JS-код
+    // 5. Безопасная и корректная вставка скрипта Яндекс.Карт
     try {
-        // Очищаем глобальную переменную map, чтобы избежать конфликтов при переключении
-        window.mapInstance = undefined; 
+        // Создаем временный элемент, чтобы браузер распарсил HTML-строку
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = mapCode.trim();
+
+        // Ищем тег script внутри загруженного кода
+        const scriptTag = tempDiv.querySelector('script');
         
-        const script = document.createElement('script');
-        script.textContent = mapCode;
-        document.head.appendChild(script);
-        document.head.removeChild(script); // Удаляем тег после выполнения, чтобы не засорять DOM
+        if (scriptTag && scriptTag.src) {
+            // Если это внешний скрипт (как в Яндекс.Конструкторе), создаем его заново.
+            // Это единственный надежный способ заставить браузер выполнить динамически загруженный скрипт.
+            const newScript = document.createElement('script');
+            newScript.src = scriptTag.src;
+            newScript.async = scriptTag.hasAttribute('async');
+            newScript.charset = scriptTag.getAttribute('charset') || 'utf-8';
+            newScript.type = scriptTag.type || 'text/javascript';
+            
+            // Добавляем скрипт в контейнер карты. Скрипт Яндекс.Карт сам создаст iframe/div внутри.
+            mapEl.appendChild(newScript);
+        } else {
+            // Fallback: если это просто HTML-разметка или inline-скрипт без src
+            mapEl.appendChild(tempDiv);
+        }
     } catch (e) {
-        console.error("Ошибка выполнения кода карты:", e);
+        console.error("Ошибка загрузки карты:", e);
         mapContainer.style.display = 'none';
     }
 }
@@ -509,7 +525,7 @@ async function loadModel(cfg) {
     curIdx = models.findIndex(m => m.id === cfg.id);
     updateNav();
 
-    // Загружаем данные параллельно
+    // Загружаем данные параллельно для скорости
     const [desc, mediaItems, lit] = await Promise.all([
         fetchText(`obr/${cfg.id}.txt`),
         loadMedia(cfg.id),
@@ -518,13 +534,13 @@ async function loadModel(cfg) {
 
     renderHeader(descEl, authorsEl, desc ? desc.trim() : '', cfg.author);
     
-    // Загружаем и отображаем карту
+    // Загружаем и отображаем карту (отдельно, т.к. требует манипуляций с DOM)
     await loadMap(cfg.id);
     
     renderCarousel(mediaItems, cfg.id);
     renderLiterature(litEl, lit);
     
-    // Прокрутка вверх при смене модели (опционально, для удобства на мобильных)
+    // Плавная прокрутка вверх при смене модели на мобильных устройствах
     if (window.innerWidth < 900) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
