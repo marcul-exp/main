@@ -9,10 +9,8 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
 
-/* ===== Layout ===== */
 .layout{display:grid;grid-template-columns:300px 1fr;gap:24px;max-width:1400px;margin:0 auto;padding:24px 20px}
 
-/* ===== Sidebar ===== */
 .sidebar{display:flex;flex-direction:column;gap:24px;align-self:start;position:sticky;top:24px}
 .sidebar-section{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
 .sidebar-section h2{font-size:17px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
@@ -25,18 +23,15 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .sidebar-info .link{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sidebar-empty{color:var(--muted);font-style:italic;padding:12px;text-align:center;font-size:13px}
 
-/* ===== Main ===== */
 .wrapper{min-width:0;display:flex;flex-direction:column;gap:24px}
 
 .page-header{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px 32px;text-align:center}
 .page-header h1{font-size:28px;font-weight:700;margin-bottom:8px}
 .page-header p{color:var(--muted);font-size:15px}
 
-/* ===== Карта: большая, по центру ===== */
 .map-container{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;display:flex;justify-content:center}
 .map-container iframe{width:100%;max-width:1100px;height:620px;border:none;border-radius:12px;display:block}
 
-/* ===== Легенда ===== */
 .legend-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px 32px}
 .legend-card h2{font-size:22px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;gap:10px}
 .legend-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
@@ -49,7 +44,6 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .marker.red{background:#ef4444;color:#fff}
 .marker.pink{background:#ec4899;color:#fff}
 .marker.outline{background:transparent;border:3px solid var(--muted);color:var(--muted);font-size:20px}
-.marker.solid{background:var(--text);color:#fff;font-size:14px}
 .legend-text{font-size:14px;font-weight:500}
 .legend-sub{font-size:12px;color:var(--muted);margin-top:2px}
 
@@ -73,7 +67,6 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 
 <div class="layout">
 
-    <!-- ===== Сайдбар ===== -->
     <aside class="sidebar">
         <div class="sidebar-section">
             <h2>🗂 Разделы сайта</h2>
@@ -90,7 +83,6 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
         </div>
     </aside>
 
-    <!-- ===== Контент ===== -->
     <main class="wrapper">
         <div class="error-banner" id="errorBanner"></div>
 
@@ -112,7 +104,10 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
                     <span class="legend-text">Объекты, локализованные по архивным данным (примерное расположение)</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:12px">
-                    <div class="marker solid">●</div>
+                    <svg width="28" height="36" viewBox="0 0 24 32" fill="none" style="flex-shrink:0">
+                        <path d="M12 0C5.373 0 0 5.373 0 12c0 9 12 20 12 20s12-11 12-20c0-6.627-5.373-12-12-12z" fill="#111827"/>
+                        <circle cx="12" cy="11" r="4" fill="#fff"/>
+                    </svg>
                     <span class="legend-text">Объекты с точно известными координатами</span>
                 </div>
             </div>
@@ -144,7 +139,6 @@ async function fetchLocalText(path) {
     catch { return null; }
 }
 
-// Парсер с фильтрацией заголовка (Название;Ссылка)
 function parseLinks(text) {
     if (!text) return [];
     return text.split('\n').map(l => l.trim()).filter(Boolean)
