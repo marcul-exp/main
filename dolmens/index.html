@@ -9,13 +9,13 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
 
-/* ===== Layout ===== */
-.layout{display:grid;grid-template-columns:300px 1fr;gap:24px;max-width:1400px;margin:0 auto;padding:24px 20px}
+/* ===== Layout: сайдбар слева + контент справа ===== */
+.layout{display:grid;grid-template-columns:280px 1fr;gap:24px;max-width:1600px;margin:0 auto;padding:24px 20px}
 
 /* ===== Sidebar ===== */
-.sidebar{display:flex;flex-direction:column;gap:24px;align-self:start;position:sticky;top:24px}
-.sidebar-section{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
-.sidebar-section h2{font-size:17px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
+.sidebar{display:flex;flex-direction:column;gap:20px;align-self:start;position:sticky;top:24px}
+.sidebar-section{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+.sidebar-section h2{font-size:16px;font-weight:600;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
 .sidebar-list{list-style:none;display:flex;flex-direction:column;gap:8px}
 .sidebar-item{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg);border-radius:10px;border-left:4px solid var(--primary);transition:.2s;text-decoration:none;color:var(--text)}
 .sidebar-item:hover{background:#e5e7eb;transform:translateX(4px);border-left-color:#1d4ed8}
@@ -25,69 +25,65 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .sidebar-info .link{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sidebar-empty{color:var(--muted);font-style:italic;padding:12px;text-align:center;font-size:13px}
 
-/* ===== Main Content ===== */
-.wrapper{max-width:100%;padding:0;display:flex;flex-direction:column;gap:24px}
+/* ===== Main ===== */
+.wrapper{display:flex;flex-direction:column;gap:24px;min-width:0}
 
-.page-header{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px 32px;text-align:center}
-.page-header h1{font-size:28px;font-weight:700;color:var(--text);margin-bottom:8px}
-.page-header p{color:var(--muted);font-size:15px}
+.page-header{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 32px;text-align:center}
+.page-header h1{font-size:26px;font-weight:700;color:var(--text);margin-bottom:6px}
+.page-header p{color:var(--muted);font-size:14px}
 
-/* ===== Map ===== */
-.map-container{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;aspect-ratio:16/9;position:relative;overflow:hidden}
-.map-container iframe{width:100%;height:100%;border:none;border-radius:12px}
+/* ===== БОЛЬШАЯ КАРТА ===== */
+.map-container{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;width:100%}
+.map-container iframe{width:100%;height:680px;border:none;border-radius:12px;display:block}
 
-/* ===== Legend (Обозначения) ===== */
-.legend-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px 32px}
-.legend-card h2{font-size:22px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+/* ===== Legend ===== */
+.legend-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 28px}
+.legend-card h2{font-size:20px;font-weight:600;margin-bottom:18px;display:flex;align-items:center;gap:10px}
 
-.legend-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:16px}
-.legend-item{display:flex;align-items:center;gap:14px;padding:14px;background:var(--bg);border-radius:12px;border:1px solid var(--border);transition:.2s}
-.legend-item:hover{border-color:var(--primary);background:#f8fafc}
-
-/* Маркеры */
-.marker{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:bold}
+.legend-types{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:20px}
+.legend-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg);border-radius:12px;border:1px solid var(--border)}
+.marker{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;font-weight:bold}
 .marker.purple{background:#9333ea;color:#fff}
 .marker.blue{background:#3b82f6;color:#fff}
 .marker.green{background:#22c55e;color:#fff}
 .marker.red{background:#ef4444;color:#fff}
 .marker.pink{background:#ec4899;color:#fff}
-.marker.outline{background:transparent;border:3px solid var(--muted);color:var(--muted);font-size:20px}
-.marker.solid{background:var(--text);color:#fff;font-size:14px}
-
 .legend-text{font-size:14px;font-weight:500;color:var(--text)}
 .legend-sub{font-size:12px;color:var(--muted);margin-top:2px}
+
+.legend-marks{display:flex;flex-wrap:wrap;gap:24px;padding:16px;background:#f8fafc;border-radius:12px;border:1px dashed var(--border)}
+.legend-marks .mark-row{display:flex;align-items:center;gap:12px}
+.mark-circle{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold}
+.mark-circle.outline{background:transparent;border:3px solid var(--muted);color:var(--muted)}
+.mark-circle.solid{background:var(--text);color:#fff;font-size:14px}
+.mark-label{font-size:13px;font-weight:500;color:var(--text)}
 
 /* ===== Ошибки ===== */
 .error-banner{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:16px 20px;border-radius:12px;font-size:14px;display:none;line-height:1.6}
 
 /* ===== Адаптивность ===== */
-@media(max-width:900px){
+@media(max-width:1000px){
     .layout{grid-template-columns:1fr;padding:16px}
     .sidebar{position:static;flex-direction:row;flex-wrap:wrap}
-    .sidebar-section{flex:1;min-width:260px}
-    .map-container{aspect-ratio:4/3}
+    .sidebar-section{flex:1;min-width:240px}
+    .map-container iframe{height:480px}
 }
 @media(max-width:600px){
-    .page-header h1{font-size:22px}
-    .legend-grid{grid-template-columns:1fr}
+    .page-header h1{font-size:20px}
+    .legend-types{grid-template-columns:1fr}
     .sidebar{flex-direction:column}
+    .map-container iframe{height:380px}
 }
 </style>
 </head>
 <body>
 
 <div class="layout">
-    <!-- ===== Левая колонка ===== -->
+
+    <!-- ===== Левая колонка: разделы + соцсети ===== -->
     <aside class="sidebar">
         <div class="sidebar-section">
             <h2>📂 Разделы</h2>
-            <ul class="sidebar-list" id="sectionsList">
-                <li class="sidebar-empty">Загрузка...</li>
-            </ul>
-        </div>
-
-        <div class="sidebar-section">
-            <h2>🔗 Полезные ссылки</h2>
             <ul class="sidebar-list" id="linksList">
                 <li class="sidebar-empty">Загрузка...</li>
             </ul>
@@ -98,9 +94,10 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
             <ul class="sidebar-list" id="socialsList">
                 <li class="sidebar-empty">Загрузка...</li>
             </ul>
-        </div</aside>
+        </div>
+    </aside>
 
-    <!-- ===== Правая колонка ===== -->
+    <!-- ===== Правая колонка: карта ===== -->
     <main class="wrapper">
         <div class="error-banner" id="errorBanner"></div>
 
@@ -115,19 +112,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 
         <div class="legend-card">
             <h2>📍 Обозначения на карте</h2>
-            
-            <div style="margin-bottom:24px; padding:16px; background:#f8fafc; border-radius:12px; border:1px dashed var(--border);">
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-                    <div class="marker outline">◯</div>
-                    <span class="legend-text">Объекты, локализованные по архивным данным (примерное расположение)</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:12px">
-                    <div class="marker solid">●</div>
-                    <span class="legend-text">Объекты с точно известными координатами</span>
-                </div>
-            </div>
 
-            <div class="legend-grid">
+            <div class="legend-types">
                 <div class="legend-item">
                     <div class="marker purple">●</div>
                     <div>
@@ -136,7 +122,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
                     </div>
                 </div>
                 <div class="legend-item">
-                    <div class="marker blue">◯</div>
+                    <div class="marker blue">●</div>
                     <div>
                         <div class="legend-text">Дольмен</div>
                         <div class="legend-sub">Локализованный по архивным данным</div>
@@ -164,8 +150,20 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
                     </div>
                 </div>
             </div>
+
+            <div class="legend-marks">
+                <div class="mark-row">
+                    <div class="mark-circle outline">◯</div>
+                    <span class="mark-label">Примерное расположение (по архивным данным)</span>
+                </div>
+                <div class="mark-row">
+                    <div class="mark-circle solid">●</div>
+                    <span class="mark-label">Точные координаты объекта</span>
+                </div>
+            </div>
         </div>
     </main>
+
 </div>
 
 <script>
@@ -179,9 +177,9 @@ const GITHUB_BRANCH = 'main';
 const RAW_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
 
 /* ============================================================
-   УТИЛИТЫ ЗАГРУЗКИ
+   ЗАГРУЗКА
    ============================================================ */
-// Загрузка из КОРНЯ репозитория (sections.csv, socials.csv)
+// Соцсети — из КОРНЯ репозитория
 async function fetchRootText(path) {
     try {
         const r = await fetch(`${RAW_URL}/${path}?t=${Date.now()}`);
@@ -189,7 +187,7 @@ async function fetchRootText(path) {
     } catch { return null; }
 }
 
-// Загрузка из ТЕКУЩЕЙ папки (link.txt)
+// Разделы — из ТЕКУЩЕЙ папки (link.txt лежит рядом с index.html)
 async function fetchLocalText(path) {
     try {
         const r = await fetch(`${path}?t=${Date.now()}`);
@@ -203,14 +201,15 @@ function showError(msg) {
     el.style.display = 'block';
 }
 
-// Универсальный парсер CSV / TXT (формат: Название;Ссылка)
+// Парсер "Название;Ссылка"
 function parseLinks(text) {
     if (!text) return [];
     return text.split('\n').map(l => l.trim()).filter(Boolean)
+        .filter(l => !l.toLowerCase().startsWith('название;'))
         .map(line => {
             const parts = line.split(';');
             const name = (parts[0] || '').trim();
-            const url  = (parts[1] || parts[0] || '').trim(); // Если нет ;, используем всю строку как URL
+            const url  = (parts[1] || '').trim();
             return name && url ? { name, url } : null;
         }).filter(Boolean);
 }
@@ -226,7 +225,7 @@ function renderSidebar(containerId, items, emoji) {
     }
     container.innerHTML = items.map(item => `
         <li>
-            <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="sidebar-item">
+            <a href="${item.url}" class="sidebar-item">
                 <span class="sidebar-emoji">${emoji}</span>
                 <div class="sidebar-info">
                     <div class="name">${item.name}</div>
@@ -241,17 +240,13 @@ function renderSidebar(containerId, items, emoji) {
    СТАРТ
    ============================================================ */
 (async function init() {
-    // 1. Загружаем данные для сайдбара параллельно
-    const [sectionsText, socialsText, linksText] = await Promise.all([
-        fetchRootText('sections.csv'),
-        fetchRootText('socials.csv'),
-        fetchLocalText('link.txt') // Файл лежит в той же папке, что и этот index.html
+    const [linksText, socialsText] = await Promise.all([
+        fetchLocalText('link.txt'),     // разделы сайта (в папке dolmens/)
+        fetchRootText('socials.csv')    // соцсети (в корне main/)
     ]);
 
-    renderSidebar('sectionsList', parseLinks(sectionsText), '📂');
-    renderSidebar('socialsList',  parseLinks(socialsText),  '📱');
-    renderSidebar('linksList',    parseLinks(linksText),    '🔗');
-
+    renderSidebar('linksList',   parseLinks(linksText),   '📂');
+    renderSidebar('socialsList', parseLinks(socialsText), '📱');
 })();
 </script>
 </body>
