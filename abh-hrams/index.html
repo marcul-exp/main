@@ -10,6 +10,11 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
 
+/* ===== Шапка на компьютере: крупный заголовок по центру (как на втором фото) ===== */
+.topbar{background:var(--card);padding:30px 20px 26px;text-align:center;border-bottom:1px solid var(--border);box-shadow:0 4px 14px rgba(0,0,0,.04)}
+.topbar-title{font-size:34px;font-weight:700;letter-spacing:.2px;color:var(--text)}
+.topbar-sub{margin-top:6px;font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px}
+
 .layout{display:grid;grid-template-columns:300px 1fr;gap:24px;max-width:1400px;margin:0 auto;padding:24px 20px}
 
 .sidebar{display:flex;flex-direction:column;gap:24px;align-self:start;position:sticky;top:24px}
@@ -122,10 +127,10 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 */
 .mobile-menu-btn,.native-links{display:none}
 @media(max-width:700px){
-    .topbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px;background:var(--card);box-shadow:var(--shadow);padding:12px 14px}
+    .topbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px;background:var(--card);box-shadow:var(--shadow);padding:12px 14px;text-align:left;border-bottom:none}
     .topbar .head-titles{flex:1;min-width:0}
-    .topbar-title{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .topbar-sub{font-size:12px;color:var(--muted)}
+    .topbar-title{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:none;letter-spacing:0}
+    .topbar-sub{margin-top:0;font-size:12px;color:var(--muted);text-transform:none;letter-spacing:0}
     .mobile-menu-btn{display:block;flex-shrink:0;padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:#fff;font-size:14px;font-weight:500;cursor:pointer;color:var(--text)}
     .mobile-menu-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
 
@@ -350,7 +355,7 @@ async function loadMedia(id) {
         try {
             const r = await fetch(`${RAW_URL}/${FOLDER}/image/${id}/${name}`, { method: 'GET' });
             if (r.ok) {
-                const ext = name.split('.').pop().toLowerCase();
+                const ext = name.split('.pop') ? name.split('.').pop().toLowerCase() : '';
                 found.push({ url: `${RAW_URL}/${FOLDER}/image/${id}/${name}`, type: VIDEO_EXT.includes(ext) ? 'video' : 'image', name });
             }
         } catch {}
