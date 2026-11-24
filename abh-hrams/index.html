@@ -112,23 +112,76 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
     .sidebar{position:static;flex-direction:row;flex-wrap:wrap}
     .sidebar-section{flex:1;min-width:260px}
 }
-@media(max-width:768px){
-    .card{padding:24px}
-    .controls{flex-direction:column;align-items:stretch}
-    .btn-toggle{margin-left:0}
-    .carousel{aspect-ratio:1/1}
+
+/* ===== Мобильная версия (телефоны) =====
+   Отличия от компьютерной версии:
+   - липкая шапка с кнопкой «Меню», сайдбар — выпадающая панель
+   - карточки-списки заменены компактными нативными ссылками (.native-links)
+   - табы превращаются в горизонтальную ленту с прокруткой
+   - карусель на весь экран, свайп влево/вправо, крупные кнопки, всё в одну колонку
+*/
+.mobile-menu-btn,.native-links{display:none}
+@media(max-width:700px){
+    .topbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px;background:var(--card);box-shadow:var(--shadow);padding:12px 14px}
+    .topbar .head-titles{flex:1;min-width:0}
+    .topbar-title{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .topbar-sub{font-size:12px;color:var(--muted)}
+    .mobile-menu-btn{display:block;flex-shrink:0;padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:#fff;font-size:14px;font-weight:500;cursor:pointer;color:var(--text)}
+    .mobile-menu-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+    .layout{padding:12px;gap:12px}
+    .sidebar{display:none;flex-direction:column;gap:12px;position:static}
+    .sidebar.open{display:flex;position:fixed;top:60px;left:12px;right:12px;max-height:calc(100vh - 76px);overflow-y:auto;z-index:40;background:var(--bg);border-radius:var(--radius);box-shadow:0 12px 40px rgba(0,0,0,.25);padding:8px}
+    .sidebar-section{display:none}
+    .native-links{display:flex;flex-direction:column;gap:8px;list-style:none;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .native-links a{display:flex;align-items:center;gap:10px;padding:13px 14px;background:var(--bg);border-radius:10px;border-left:4px solid var(--primary);text-decoration:none;color:var(--text);font-size:15px;font-weight:500}
+    .native-links a:active{background:#e5e7eb}
+
+    .nav-arrows{padding:10px;margin-bottom:12px;gap:10px}
+    .nav-btn{flex:1;padding:12px}
+    .nav-counter{min-width:70px;font-size:14px}
+
+    .controls{margin-bottom:12px}
+    .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px;scrollbar-width:none}
+    .tabs::-webkit-scrollbar{display:none}
+    .tab-btn{flex-shrink:0;padding:10px 14px;font-size:13px}
+    .btn-toggle{display:none} /* на телефоне вместо табов — выпадающий список */
+    .dropdown{width:100%}
+    .dropdown.show{display:block}
+
+    .card{padding:16px;border-radius:12px}
+    .card-header{margin-bottom:16px;padding-bottom:12px}
+    .card-header h1{font-size:20px;margin-bottom:8px}
+    .description{font-size:14px}
+    .authors-line{font-size:12px}
+
+    .media-container{margin-bottom:16px}
+    .carousel{aspect-ratio:1/1;border-radius:10px}
+    .carousel-btn{width:40px;height:40px;font-size:18px}
+    .carousel-btn.prev{left:6px}.carousel-btn.next{right:6px}
+
+    .literature-section{margin-top:16px;padding-top:14px}
+    .literature-section h2{font-size:18px;margin-bottom:10px}
+    .literature-item{padding:12px 14px}
+    .literature-item a{font-size:13px}
+
     #map { min-height: 300px; }
     #map iframe, #map div[style*="width"], #map ymaps { aspect-ratio: 1 / 0.8; min-height: 300px; }
-    .card-header h1{font-size:24px}
-    .nav-arrows{flex-wrap:wrap}
-    .sidebar{flex-direction:column}
 }
 </style>
 </head>
 <body>
 
+<div class="topbar">
+    <div class="head-titles">
+        <div class="topbar-title">Реконструкции исторических памятников</div>
+        <div class="topbar-sub">Маркульская экспедиция · Абхазия</div>
+    </div>
+    <button class="mobile-menu-btn" id="menuBtn" aria-label="Открыть меню">☰ Меню</button>
+</div>
+
 <div class="layout">
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
         <div class="sidebar-section">
             <h2>📂 Разделы</h2>
             <ul class="sidebar-list" id="sectionsList">
@@ -142,6 +195,9 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
                 <li class="sidebar-empty">Загрузка...</li>
             </ul>
         </div>
+
+        <!-- Показывается только на телефонах: те же ссылки как нативные (внутренние — без новой вкладки) -->
+        <ul class="native-links" id="nativeLinks"></ul>
     </aside>
 
     <main class="wrapper">
@@ -447,6 +503,20 @@ function renderCarousel(items, id) {
 btnPrev.onclick = () => { if (idx > 0) { idx--; updateCarousel(); } };
 btnNext.onclick = () => { if (idx < media.length - 1) { idx++; updateCarousel(); } };
 
+/* свайпы влево/вправо по карусели (для телефонов) */
+let touchX = null;
+document.getElementById('carousel').addEventListener('touchstart', e => {
+    touchX = e.touches[0].clientX;
+}, { passive: true });
+document.getElementById('carousel').addEventListener('touchend', e => {
+    if (touchX === null || !isMobile()) { touchX = null; return; }
+    const dx = e.changedTouches[0].clientX - touchX;
+    touchX = null;
+    if (Math.abs(dx) < 40) return; // порог свайпа
+    if (dx < 0 && idx < media.length - 1) { idx++; updateCarousel(); }
+    else if (dx > 0 && idx > 0) { idx--; updateCarousel(); }
+}, { passive: true });
+
 document.addEventListener('keydown', e => {
     if (e.key === 'ArrowLeft' && idx > 0) { idx--; updateCarousel(); }
     if (e.key === 'ArrowRight' && idx < media.length - 1) { idx++; updateCarousel(); }
@@ -500,13 +570,56 @@ async function loadModel(cfg) {
     }
 }
 
+/* ============================================================
+   МОБИЛЬНАЯ ВЕРСИЯ (телефоны)
+   ============================================================ */
+const isMobile = () => window.innerWidth <= 700;
+
+function isInternalSite(url) {
+    try {
+        const u = new URL(url, location.href);
+        return u.hostname.endsWith('github.io') && u.pathname.startsWith('/main');
+    } catch { return false; }
+}
+
+function buildNativeLinks(items) {
+    const box = document.getElementById('nativeLinks');
+    if (!box) return;
+    if (!items.length) { box.innerHTML = '<li class="sidebar-empty">Список пуст</li>'; return; }
+    box.innerHTML = items.map(it => {
+        // внутренние ссылки сайта на телефоне грузятся в этой же вкладке
+        const attrs = isInternalSite(it.url) ? '' : ' target="_blank" rel="noopener noreferrer"';
+        return `<li><a href="${it.url}"${attrs}>${it.name}</a></li>`;
+    }).join('');
+}
+
+function setupMobile(allItems) {
+    buildNativeLinks(allItems);
+    const btn = document.getElementById('menuBtn');
+    const sidebar = document.getElementById('sidebar');
+    btn.onclick = () => {
+        const open = sidebar.classList.toggle('open');
+        btn.classList.toggle('active', open);
+        btn.textContent = open ? '✕ Закрыть' : '☰ Меню';
+    };
+    // на телефоне сразу переключаемся в режим выпадающего списка
+    if (isMobile()) {
+        isTabsMode = false;
+        tabsEl.style.display = 'none';
+        dropEl.classList.add('show');
+    }
+}
+
 (async function init() {
     const [sectionsText, socialsText] = await Promise.all([
         fetchRootText('sections.csv'),
         fetchRootText('socials.csv')
     ]);
-    renderSidebar('sectionsList', parseCSV(sectionsText), '📂');
-    renderSidebar('socialsList',  parseCSV(socialsText),  '📱');
+    const sections = parseCSV(sectionsText);
+    const socials  = parseCSV(socialsText);
+    renderSidebar('sectionsList', sections, '📂');
+    renderSidebar('socialsList',  socials,  '📱');
+    setupMobile([...sections, ...socials]);
 
     models = await loadTabData();
     if (!models.length) {

@@ -55,18 +55,57 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
     .sidebar{position:static;flex-direction:row;flex-wrap:wrap}
     .sidebar-section{flex:1;min-width:260px}
 }
-@media(max-width:600px){
-    .page-header h1{font-size:22px}
+
+/* ===== Мобильная версия (телефоны) =====
+   Отличия от компьютерной версии:
+   - липкая шапка с кнопкой «Меню», сайдбар — выпадающая панель
+   - карточки-списки заменены компактными нативными ссылками (.native-links)
+   - карта на всю ширину, легенка в одну колонку, всё в одну колонку
+*/
+.mobile-menu-btn,.native-links{display:none}
+@media(max-width:700px){
+    .topbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px;background:var(--card);box-shadow:var(--shadow);padding:12px 14px}
+    .topbar .head-titles{flex:1;min-width:0}
+    .topbar-title{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .topbar-sub{font-size:12px;color:var(--muted)}
+    .mobile-menu-btn{display:block;flex-shrink:0;padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:#fff;font-size:14px;font-weight:500;cursor:pointer;color:var(--text)}
+    .mobile-menu-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+    .layout{padding:12px;gap:12px}
+    .sidebar{display:none;flex-direction:column;gap:12px;position:static}
+    .sidebar.open{display:flex;position:fixed;top:60px;left:12px;right:12px;max-height:calc(100vh - 76px);overflow-y:auto;z-index:40;background:var(--bg);border-radius:var(--radius);box-shadow:0 12px 40px rgba(0,0,0,.25);padding:8px}
+    .sidebar-section{display:none}
+    .native-links{display:flex;flex-direction:column;gap:8px;list-style:none;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .native-links a{display:flex;align-items:center;gap:10px;padding:13px 14px;background:var(--bg);border-radius:10px;border-left:4px solid var(--primary);text-decoration:none;color:var(--text);font-size:15px;font-weight:500}
+    .native-links a:active{background:#e5e7eb}
+
+    .page-header{padding:18px 16px}
+    .page-header h1{font-size:19px;margin-bottom:4px}
+    .page-header p{font-size:13px}
+
+    .map-container{padding:8px}
+    .map-container > div{max-width:100%}
+
+    .legend-card{padding:18px 16px}
+    .legend-card h2{font-size:18px;margin-bottom:14px}
     .legend-grid{grid-template-columns:1fr}
-    .sidebar{flex-direction:column}
+    .legend-item{padding:12px}
 }
 </style>
 </head>
 <body>
 
+<div class="topbar">
+    <div class="head-titles">
+        <div class="topbar-title">Карта мегалитических памятников</div>
+        <div class="topbar-sub">Республика Абхазия · Маркульская экспедиция</div>
+    </div>
+    <button class="mobile-menu-btn" id="menuBtn" aria-label="Открыть меню">☰ Меню</button>
+</div>
+
 <div class="layout">
 
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
         <div class="sidebar-section">
             <h2>🗂 Разделы сайта</h2>
             <ul class="sidebar-list" id="linksList">
@@ -80,6 +119,9 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
                 <li class="sidebar-empty">Загрузка...</li>
             </ul>
         </div>
+
+        <!-- Показывается только на телефонах: те же ссылки как нативные (внутренние — без новой вкладки) -->
+        <ul class="native-links" id="nativeLinks"></ul>
     </aside>
 
     <main class="wrapper">
@@ -167,14 +209,51 @@ function renderSidebar(containerId, items, emoji) {
     `).join('');
 }
 
+/* ============================================================
+   МОБИЛЬНАЯ ВЕРСИЯ (телефоны)
+   ============================================================ */
+const isMobile = () => window.innerWidth <= 700;
+
+function isInternalSite(url) {
+    try {
+        const u = new URL(url, location.href);
+        return u.hostname.endsWith('github.io') && u.pathname.startsWith('/main');
+    } catch { return false; }
+}
+
+function buildNativeLinks(items) {
+    const box = document.getElementById('nativeLinks');
+    if (!box) return;
+    if (!items.length) { box.innerHTML = '<li class="sidebar-empty">Список пуст</li>'; return; }
+    box.innerHTML = items.map(it => {
+        // внутренние ссылки сайта на телефоне грузятся в этой же вкладке
+        const attrs = isInternalSite(it.url) ? '' : ' target="_blank" rel="noopener noreferrer"';
+        return `<li><a href="${it.url}"${attrs}>${it.name}</a></li>`;
+    }).join('');
+}
+
+function setupMobile(allItems) {
+    buildNativeLinks(allItems);
+    const btn = document.getElementById('menuBtn');
+    const sidebar = document.getElementById('sidebar');
+    btn.onclick = () => {
+        const open = sidebar.classList.toggle('open');
+        btn.classList.toggle('active', open);
+        btn.textContent = open ? '✕ Закрыть' : '☰ Меню';
+    };
+}
+
 (async function init() {
     const [linksText, socialsText] = await Promise.all([
         fetchText('fieldresearch/dolmens/link.txt'),
         fetchText('socials.csv')
     ]);
     
-    renderSidebar('linksList',   parseLinks(linksText),   '🗂');
-    renderSidebar('socialsList', parseLinks(socialsText), '📱');
+    const links   = parseLinks(linksText);
+    const socials = parseLinks(socialsText);
+    renderSidebar('linksList',   links,   '🗂');
+    renderSidebar('socialsList', socials, '📱');
+    setupMobile([...links, ...socials]);
 })();
 </script>
 </body>

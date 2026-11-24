@@ -41,31 +41,64 @@ header p{color:var(--muted);font-size:14px}
 .error-banner{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:16px 20px;border-radius:12px;margin-bottom:20px;font-size:14px;display:none;line-height:1.6}
 .error-banner code{background:rgba(0,0,0,.05);padding:2px 6px;border-radius:4px;font-size:13px}
 
-/* ===== Адаптивность ===== */
+/* ===== Адаптивность (планшет) ===== */
 @media(max-width:900px){
     .layout{grid-template-columns:1fr;padding:16px}
     .sidebar{flex-direction:row;flex-wrap:wrap}
     .sidebar-section{flex:1;min-width:280px}
 }
-@media(max-width:600px){
-    header h1{font-size:22px}
-    .main{padding:24px}
-    .sidebar-section{padding:20px}
+
+/* ===== Мобильная версия (телефоны) =====
+   Отличия от компьютерной версии:
+   - липкая шапка с компактным заголовком и кнопкой «Меню»
+   - сайдбар превращается в выпадающую панель (открывается/закрывается)
+   - списки подменяются нативными ссылками (.native-links): без target=_blank,
+     внутренние ссылки грузятся в этой же вкладке
+   - увеличенные кнопки-списки, всё в одну колонку
+*/
+.mobile-menu-btn{display:none}
+.native-links{display:none}
+@media(max-width:700px){
+    header{position:sticky;top:0;z-index:50;padding:12px 14px;text-align:left;display:flex;align-items:center;gap:10px}
+    header .head-titles{flex:1;min-width:0}
+    header h1{font-size:18px;margin-bottom:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    header p{font-size:12px}
+    .mobile-menu-btn{display:block;flex-shrink:0;padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:#fff;font-size:14px;font-weight:500;cursor:pointer;color:var(--text)}
+    .mobile-menu-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+    .layout{padding:12px;gap:12px}
+    .sidebar{display:none;flex-direction:column;gap:12px}
+    /* на телефоне сайдбар — панель поверх контента */
+    .sidebar.open{display:flex;position:fixed;top:60px;left:12px;right:12px;max-height:calc(100vh - 76px);overflow-y:auto;z-index:40;background:var(--bg);border-radius:var(--radius);box-shadow:0 12px 40px rgba(0,0,0,.25);padding:8px}
+    /* на телефоне карточки-секции скрыты — вместо них нативные ссылки ниже */
+    .sidebar-section{display:none}
+    .native-links{display:flex;flex-direction:column;gap:8px;list-style:none;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .native-links a{display:flex;align-items:center;gap:10px;padding:13px 14px;background:var(--bg);border-radius:10px;border-left:4px solid var(--primary);text-decoration:none;color:var(--text);font-size:15px;font-weight:500}
+    .native-links a:active{background:#e5e7eb}
+
+    .main{padding:18px;min-height:0}
+    .main h2{font-size:20px}
+    .main h3{font-size:15px;margin-bottom:8px}
+    .main ol{padding-left:20px}
+    .main li{margin-bottom:8px;font-size:14px}
 }
 </style>
 </head>
 <body>
 
 <header>
-    <h1>Маркульская Экспедиция</h1>
-    <p>ИА РАН, АБИГИ АНА</p>
+    <div class="head-titles">
+        <h1>Маркульская Экспедиция</h1>
+        <p>ИА РАН, АБИГИ АНА</p>
+    </div>
+    <button class="mobile-menu-btn" id="menuBtn" aria-label="Открыть меню">☰ Меню</button>
 </header>
 
 <div class="error-banner" id="errorBanner"></div>
 
 <div class="layout">
     <!-- Левая колонка -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
         <div class="sidebar-section">
             <h2>🏛 Наши проекты</h2>
             <ul class="sidebar-list" id="projectsList">
@@ -79,6 +112,9 @@ header p{color:var(--muted);font-size:14px}
                 <li class="sidebar-empty">Загрузка...</li>
             </ul>
         </div>
+
+        <!-- Показывается только на телефонах: те же ссылки в виде нативных ссылок (без target=_blank для внутренних) -->
+        <ul class="native-links" id="nativeLinks"></ul>
     </aside>
     
     <!-- Правая колонка -->
@@ -209,15 +245,64 @@ function renderList(containerId, items, defaultEmoji) {
 /* ============================================================
    СТАРТ
    ============================================================ */
+/* Данные загруженных ссылок — используются для мобильного блока нативных ссылок */
+const itemsData = {};
+
 (async function init() {
     const [projects, socials] = await Promise.all([
         loadCSV('projects.csv'),
         loadCSV('socials.csv')
     ]);
+    itemsData.projects = projects;
+    itemsData.socials  = socials;
     
     renderList('projectsList', projects, '🏛');
     renderList('socialsList', socials, '📱');
+
+    setupMobile();
 })();
+
+/* ============================================================
+   МОБИЛЬНАЯ ВЕРСИЯ (телефоны)
+   - кнопка «Меню» показывает/скрывает панель ссылок
+   - нативные ссылки (.native-links): внутренние — в этой же вкладке,
+     внешние (соцсети) — как обычно; на десктопе блок скрыт CSS
+   ============================================================ */
+const isMobile = () => window.innerWidth <= 700;
+
+function isInternalSite(url) {
+    try {
+        const u = new URL(url, location.href);
+        return u.hostname.endsWith('github.io') &&
+               u.pathname.startsWith('/main'); // все страницы этого сайта
+    } catch { return false; }
+}
+
+function buildNativeLinks() {
+    const box = document.getElementById('nativeLinks');
+    if (!box) return;
+    const items = [];
+    for (const list of Object.values(itemsData)) {
+        for (const it of list) {
+            const internal = isInternalSite(it.url);
+            // внутренние ссылки сайта на телефоне грузятся в этой же вкладке
+            const attrs = internal ? '' : ' target="_blank" rel="noopener noreferrer"';
+            items.push(`<li><a href="${it.url}"${attrs}>${it.name}</a></li>`);
+        }
+    }
+    box.innerHTML = items.join('') || '<li class="sidebar-empty">Список пуст</li>';
+}
+
+function setupMobile() {
+    buildNativeLinks();
+    const btn = document.getElementById('menuBtn');
+    const sidebar = document.getElementById('sidebar');
+    btn.onclick = () => {
+        const open = sidebar.classList.toggle('open');
+        btn.classList.toggle('active', open);
+        btn.textContent = open ? '✕ Закрыть' : '☰ Меню';
+    };
+}
 </script>
 
 </body>
