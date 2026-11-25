@@ -4,15 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Реконструкции исторических памятников</title>
-
 <style>
 :root{--bg:#f3f4f6;--card:#fff;--primary:#2563eb;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--radius:16px;--shadow:0 10px 30px -5px rgba(0,0,0,.08)}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
 
-/* ===== Шапка на компьютере: крупный заголовок по центру (как на втором фото) ===== */
+/* ===== Шапка на компьютере ===== */
 .topbar{background:var(--card);padding:30px 20px 26px;text-align:center;border-bottom:1px solid var(--border);box-shadow:0 4px 14px rgba(0,0,0,.04)}
-.topbar-title{font-size:34px;font-weight:700;letter-spacing:.2px;color:var(--text)}
+.topbar-flex { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.topbar-logo { height: 56px; width: auto; object-fit: contain; }
+.topbar-title{font-size:34px;font-weight:700;letter-spacing:.2px;color:var(--text); margin: 0;}
 .topbar-sub{margin-top:6px;font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px}
 
 .layout{display:grid;grid-template-columns:300px 1fr;gap:24px;max-width:1400px;margin:0 auto;padding:24px 20px}
@@ -55,32 +56,9 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .description a:hover{color:#c0392b;border-bottom-style:solid}
 .authors-line{font-size:14px;color:var(--muted);padding-top:12px;border-top:1px dashed var(--border);font-weight:500}
 
-/* ===== Стили для карты ===== */
-.map-container {
-    width: 100%;
-    margin-top: 32px;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    display: none;
-    background: #f0f0f0;
-}
-#map {
-    width: 100%;
-    min-height: 400px;
-    position: relative;
-    z-index: 1;
-}
-#map iframe,
-#map div[style*="width"],
-#map ymaps {
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    aspect-ratio: 873 / 710;
-    min-height: 350px;
-}
+.map-container { width: 100%; margin-top: 32px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: none; background: #f0f0f0; }
+#map { width: 100%; min-height: 400px; position: relative; z-index: 1; }
+#map iframe, #map div[style*="width"], #map ymaps { width: 100% !important; max-width: 100% !important; height: auto !important; aspect-ratio: 873 / 710; min-height: 350px; }
 
 .media-container{width:100%;margin-bottom:32px}
 .carousel{position:relative;aspect-ratio:4/3;border-radius:12px;overflow:hidden;background:#000;border:1px solid var(--border)}
@@ -118,18 +96,14 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
     .sidebar-section{flex:1;min-width:260px}
 }
 
-/* ===== Мобильная версия (телефоны) =====
-   Отличия от компьютерной версии:
-   - липкая шапка с кнопкой «Меню», сайдбар — выпадающая панель
-   - карточки-списки заменены компактными нативными ссылками (.native-links)
-   - табы превращаются в горизонтальную ленту с прокруткой
-   - карусель на весь экран, свайп влево/вправо, крупные кнопки, всё в одну колонку
-*/
+/* ===== Мобильная версия ===== */
 .mobile-menu-btn,.native-links{display:none}
 @media(max-width:700px){
     .topbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px;background:var(--card);box-shadow:var(--shadow);padding:12px 14px;text-align:left;border-bottom:none}
+    .topbar-flex { justify-content: flex-start; gap: 10px; }
+    .topbar-logo { height: 36px; }
     .topbar .head-titles{flex:1;min-width:0}
-    .topbar-title{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:none;letter-spacing:0}
+    .topbar-title{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:none;letter-spacing:0; margin: 0;}
     .topbar-sub{margin-top:0;font-size:12px;color:var(--muted);text-transform:none;letter-spacing:0}
     .mobile-menu-btn{display:block;flex-shrink:0;padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:#fff;font-size:14px;font-weight:500;cursor:pointer;color:var(--text)}
     .mobile-menu-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
@@ -150,7 +124,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
     .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px;scrollbar-width:none}
     .tabs::-webkit-scrollbar{display:none}
     .tab-btn{flex-shrink:0;padding:10px 14px;font-size:13px}
-    .btn-toggle{display:none} /* на телефоне вместо табов — выпадающий список */
+    .btn-toggle{display:none}
     .dropdown{width:100%}
     .dropdown.show{display:block}
 
@@ -178,9 +152,12 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 <body>
 
 <div class="topbar">
-    <div class="head-titles">
-        <div class="topbar-title">Реконструкции исторических памятников</div>
-        <div class="topbar-sub">Маркульская экспедиция · Абхазия</div>
+    <div class="topbar-flex">
+        <img src="../logo.png" alt="Логотип" class="topbar-logo">
+        <div class="head-titles">
+            <div class="topbar-title">Реконструкции исторических памятников</div>
+            <div class="topbar-sub">Маркульская экспедиция · Абхазия</div>
+        </div>
     </div>
     <button class="mobile-menu-btn" id="menuBtn" aria-label="Открыть меню">☰ Меню</button>
 </div>
@@ -201,7 +178,6 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
             </ul>
         </div>
 
-        <!-- Показывается только на телефонах: те же ссылки как нативные (внутренние — без новой вкладки) -->
         <ul class="native-links" id="nativeLinks"></ul>
     </aside>
 
@@ -244,7 +220,6 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
                 </ul>
             </div>
 
-            <!-- Карта теперь ПОСЛЕ списка литературы -->
             <div class="map-container" id="mapContainer">
                 <div id="map"></div>
             </div>
@@ -355,7 +330,7 @@ async function loadMedia(id) {
         try {
             const r = await fetch(`${RAW_URL}/${FOLDER}/image/${id}/${name}`, { method: 'GET' });
             if (r.ok) {
-                const ext = name.split('.pop') ? name.split('.').pop().toLowerCase() : '';
+                const ext = name.split('.').pop().toLowerCase();
                 found.push({ url: `${RAW_URL}/${FOLDER}/image/${id}/${name}`, type: VIDEO_EXT.includes(ext) ? 'video' : 'image', name });
             }
         } catch {}
@@ -508,7 +483,6 @@ function renderCarousel(items, id) {
 btnPrev.onclick = () => { if (idx > 0) { idx--; updateCarousel(); } };
 btnNext.onclick = () => { if (idx < media.length - 1) { idx++; updateCarousel(); } };
 
-/* свайпы влево/вправо по карусели (для телефонов) */
 let touchX = null;
 document.getElementById('carousel').addEventListener('touchstart', e => {
     touchX = e.touches[0].clientX;
@@ -517,7 +491,7 @@ document.getElementById('carousel').addEventListener('touchend', e => {
     if (touchX === null || !isMobile()) { touchX = null; return; }
     const dx = e.changedTouches[0].clientX - touchX;
     touchX = null;
-    if (Math.abs(dx) < 40) return; // порог свайпа
+    if (Math.abs(dx) < 40) return;
     if (dx < 0 && idx < media.length - 1) { idx++; updateCarousel(); }
     else if (dx > 0 && idx > 0) { idx--; updateCarousel(); }
 }, { passive: true });
@@ -575,9 +549,6 @@ async function loadModel(cfg) {
     }
 }
 
-/* ============================================================
-   МОБИЛЬНАЯ ВЕРСИЯ (телефоны)
-   ============================================================ */
 const isMobile = () => window.innerWidth <= 700;
 
 function isInternalSite(url) {
@@ -592,7 +563,6 @@ function buildNativeLinks(items) {
     if (!box) return;
     if (!items.length) { box.innerHTML = '<li class="sidebar-empty">Список пуст</li>'; return; }
     box.innerHTML = items.map(it => {
-        // внутренние ссылки сайта на телефоне грузятся в этой же вкладке
         const attrs = isInternalSite(it.url) ? '' : ' target="_blank" rel="noopener noreferrer"';
         return `<li><a href="${it.url}"${attrs}>${it.name}</a></li>`;
     }).join('');
@@ -607,7 +577,6 @@ function setupMobile(allItems) {
         btn.classList.toggle('active', open);
         btn.textContent = open ? '✕ Закрыть' : '☰ Меню';
     };
-    // на телефоне сразу переключаемся в режим выпадающего списка
     if (isMobile()) {
         isTabsMode = false;
         tabsEl.style.display = 'none';
