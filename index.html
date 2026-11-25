@@ -57,6 +57,9 @@ header p{color:var(--muted);font-size:14px;margin:0}
     header{position:sticky;top:0;z-index:50;padding:12px 14px;text-align:left;display:flex;align-items:center;gap:10px}
     .header-flex { justify-content: flex-start; gap: 10px; }
     .header-logo { height: 36px; }
+    /* Скрываем второй логотип на мобильных, чтобы не загромождать экран */
+    .header-flex .header-logo:last-child { display: none; }
+    
     header .head-titles{flex:1;min-width:0}
     header h1{font-size:18px;margin-bottom:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     header p{font-size:12px}
@@ -88,6 +91,7 @@ header p{color:var(--muted);font-size:14px;margin:0}
             <h1>Маркульская Экспедиция</h1>
             <p>ИА РАН, АБИГИ АНА</p>
         </div>
+        <img src="logo.png" alt="Логотип" class="header-logo">
     </div>
     <button class="mobile-menu-btn" id="menuBtn" aria-label="Открыть меню">☰ Меню</button>
 </header>
