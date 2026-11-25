@@ -9,14 +9,14 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
 
-/* ===== Шапка на компьютере: крупный заголовок по центру (как на втором фото) ===== */
+/* ===== Шапка на компьютере ===== */
 .topbar{background:var(--card);padding:30px 20px 26px;text-align:center;border-bottom:1px solid var(--border);box-shadow:0 4px 14px rgba(0,0,0,.04)}
-.topbar-title{font-size:34px;font-weight:700;letter-spacing:.2px;color:var(--text)}
+.topbar-flex { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.topbar-logo { height: 56px; width: auto; object-fit: contain; }
+.topbar-title{font-size:34px;font-weight:700;letter-spacing:.2px;color:var(--text); margin: 0;}
 .topbar-sub{margin-top:6px;font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px}
 .topbar-desc{margin-top:10px;font-size:15px;color:var(--muted)}
 
-/* На компьютере карточка-заголовок в контенте дублирует шапку — скрываем её.
-   Чтобы вернуть карточку — просто удали это правило. */
 @media(min-width:701px){.page-header{display:none}}
 
 .layout{display:grid;grid-template-columns:300px 1fr;gap:24px;max-width:1400px;margin:0 auto;padding:24px 20px}
@@ -40,7 +40,6 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .page-header p{color:var(--muted);font-size:15px}
 
 .map-container{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;display:flex;justify-content:center}
-/* Стили для контейнера карты остались прежними, скрипт Яндекса адаптируется под них */
 .map-container > div { width: 100%; max-width: 1100px; }
 
 .legend-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px 32px}
@@ -66,17 +65,14 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
     .sidebar-section{flex:1;min-width:260px}
 }
 
-/* ===== Мобильная версия (телефоны) =====
-   Отличия от компьютерной версии:
-   - липкая шапка с кнопкой «Меню», сайдбар — выпадающая панель
-   - карточки-списки заменены компактными нативными ссылками (.native-links)
-   - карта на всю ширину, легенка в одну колонку, всё в одну колонку
-*/
+/* ===== Мобильная версия ===== */
 .mobile-menu-btn,.native-links{display:none}
 @media(max-width:700px){
     .topbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px;background:var(--card);box-shadow:var(--shadow);padding:12px 14px;text-align:left;border-bottom:none}
+    .topbar-flex { justify-content: flex-start; gap: 10px; }
+    .topbar-logo { height: 36px; }
     .topbar .head-titles{flex:1;min-width:0}
-    .topbar-title{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0}
+    .topbar-title{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0; margin: 0;}
     .topbar-sub{font-size:12px;color:var(--muted);margin-top:0;text-transform:none;letter-spacing:0}
     .topbar-desc{display:none}
     .mobile-menu-btn{display:block;flex-shrink:0;padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:#fff;font-size:14px;font-weight:500;cursor:pointer;color:var(--text)}
@@ -107,10 +103,13 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 <body>
 
 <div class="topbar">
-    <div class="head-titles">
-        <div class="topbar-title">Карта мегалитических памятников</div>
-        <div class="topbar-sub">Республика Абхазия · Маркульская экспедиция</div>
-        <div class="topbar-desc">Интерактивная карта с указанием точных и предполагаемых координат объектов</div>
+    <div class="topbar-flex">
+        <img src="../../logo.png" alt="Логотип" class="topbar-logo">
+        <div class="head-titles">
+            <div class="topbar-title">Карта мегалитических памятников</div>
+            <div class="topbar-sub">Республика Абхазия · Маркульская экспедиция</div>
+            <div class="topbar-desc">Интерактивная карта с указанием точных и предполагаемых координат объектов</div>
+        </div>
     </div>
     <button class="mobile-menu-btn" id="menuBtn" aria-label="Открыть меню">☰ Меню</button>
 </div>
@@ -132,7 +131,6 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
             </ul>
         </div>
 
-        <!-- Показывается только на телефонах: те же ссылки как нативные (внутренние — без новой вкладки) -->
         <ul class="native-links" id="nativeLinks"></ul>
     </aside>
 
@@ -144,11 +142,9 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
             <p>Интерактивная карта с указанием точных и предполагаемых координат объектов</p>
         </div>
 
-        <!-- ЗДЕСЬ БЫЛА ЗАМЕНА: iframe заменен на script Яндекс.Карт -->
         <div class="map-container">
             <script type="text/javascript" charset="utf-8" async src="https://api-maps.yandex.ru/services/constructor/1.0/js/?um=constructor%3A0a90c118f2b60e0f123946a94384992c668318f194860b2982158c01cab18919&amp;width=100%25&amp;height=620&amp;lang=ru_RU&amp;scroll=true"></script>
         </div>
-        <!-- Примечание: я заменил width=909 на width=100%25 (100%), чтобы карта красиво растягивалась на мобильных устройствах, как и было задумано в вашем CSS. Если нужна жесткая ширина 909, замените 100%25 обратно на 909 -->
 
         <div class="legend-card">
             <h2>📍 Обозначения на карте</h2>
@@ -185,7 +181,6 @@ const GITHUB_REPO   = 'main';
 const GITHUB_BRANCH = 'main';
 const RAW_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
 
-// Универсальная функция загрузки по абсолютному пути
 async function fetchText(path) {
     try {
         const r = await fetch(`${RAW_URL}/${path}?t=${Date.now()}`);
@@ -221,9 +216,6 @@ function renderSidebar(containerId, items, emoji) {
     `).join('');
 }
 
-/* ============================================================
-   МОБИЛЬНАЯ ВЕРСИЯ (телефоны)
-   ============================================================ */
 const isMobile = () => window.innerWidth <= 700;
 
 function isInternalSite(url) {
@@ -238,7 +230,6 @@ function buildNativeLinks(items) {
     if (!box) return;
     if (!items.length) { box.innerHTML = '<li class="sidebar-empty">Список пуст</li>'; return; }
     box.innerHTML = items.map(it => {
-        // внутренние ссылки сайта на телефоне грузятся в этой же вкладке
         const attrs = isInternalSite(it.url) ? '' : ' target="_blank" rel="noopener noreferrer"';
         return `<li><a href="${it.url}"${attrs}>${it.name}</a></li>`;
     }).join('');
