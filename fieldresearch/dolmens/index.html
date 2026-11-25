@@ -71,6 +71,9 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
     .topbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px;background:var(--card);box-shadow:var(--shadow);padding:12px 14px;text-align:left;border-bottom:none}
     .topbar-flex { justify-content: flex-start; gap: 10px; }
     .topbar-logo { height: 36px; }
+    /* Скрываем второй логотип на мобильных, чтобы не загромождать экран */
+    .topbar-flex .topbar-logo:last-child { display: none; }
+
     .topbar .head-titles{flex:1;min-width:0}
     .topbar-title{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0; margin: 0;}
     .topbar-sub{font-size:12px;color:var(--muted);margin-top:0;text-transform:none;letter-spacing:0}
@@ -110,6 +113,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
             <div class="topbar-sub">Республика Абхазия · Маркульская экспедиция</div>
             <div class="topbar-desc">Интерактивная карта с указанием точных и предполагаемых координат объектов</div>
         </div>
+        <img src="../../logo.png" alt="Логотип" class="topbar-logo">
     </div>
     <button class="mobile-menu-btn" id="menuBtn" aria-label="Открыть меню">☰ Меню</button>
 </div>
